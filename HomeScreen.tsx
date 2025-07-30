@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, Button, StyleSheet, Dimensions, Platform, StatusBar, SafeAreaView, Image, Animated, Pressable, TextInput } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from './App';
+import { RootStackParamList } from 'navigation/RootNavigator';
 import { useNavigation } from '@react-navigation/native';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -159,7 +159,7 @@ export default function HomeScreen() {
           <Pressable
             onHoverIn={() => setIsCreateAccountButtonHovered(true)}
             onHoverOut={() => setIsCreateAccountButtonHovered(false)}
-       onPress={() => navigation.navigate('Profile', { name: 'Laneway Student' })}
+            onPress={() => navigation.navigate('SignUp')}
             style={({ pressed }) => [styles.customButton, pressed && { opacity: 0.9 }]}
           >
             <Text style={[

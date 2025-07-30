@@ -1,7 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, Platform, StatusBar, SafeAreaView, ScrollView, Animated, Pressable, TextInput } from 'react-native';
-import { RouteProp, useRoute } from '@react-navigation/native';
-import { RootStackParamList } from './App';
+import { View, Text, StyleSheet, Dimensions, Platform, StatusBar, SafeAreaView, ScrollView, Animated, Pressable, TextInput, TouchableWithoutFeedback } from 'react-native';
+import { RouteProp, useRoute, } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+
+import { signUp } from 'aws-amplify/auth';
+import { RootStackParamList } from 'navigation/RootNavigator';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState,useEffect } from "react";
@@ -66,7 +71,11 @@ export default function SignUp() {
       friction: 5,
     }).start();
   };
-  const handleSignUp = () => {
+
+  type Nav = NativeStackNavigationProp<RootStackParamList>;
+  const navigation = useNavigation<Nav>();
+  const handleSignUp = async() => {
+    navigation.navigate('ConfirmCode', { username: contact });
     // Reset all errors
     setFirstNameError('');
     setSurnameError('');
@@ -108,7 +117,7 @@ export default function SignUp() {
       setPasswordError('Enter New password');
       hasErrors = true;
     } else if (!validatePassword(password)) {
-      setPasswordError('Password needs minimum 10 characters, 1 uppercase, 1 lowercase, 1 number and a special character (@#$%^&*()_+-=[]{}|;:,.<>?!)');
+      setPasswordError('Password needs minimum 8 characters, 1 uppercase, 1 lowercase, 1 number and a special character (@#$%^&*()_+-=[]{}|;:,.<>?!)');
       hasErrors = true;
     } else {
       setPasswordError(''); // Clear error if password meets requirements
@@ -126,10 +135,31 @@ export default function SignUp() {
     if (hasErrors) {
       return;
     }
-
-    // Placeholder for sign up logic
-    alert(`First name: ${firstName}\nSurname: ${surname}\nDate of birth: ${dob}\nGender: ${gender}\nContact: ${contact}\nPassword: ${password}\nConfirm Password: ${confirmPassword}`);
-  };
+/* ─── SIGN‑UP with Amplify ─── */
+  try {
+  const result = await signUp({
+    username: contact,           // email or phone
+    password,
+    options: {
+    userAttributes: {
+      email:         contact.includes('@') ? contact : undefined,
+      phone_number: !contact.includes('@') ? contact : undefined,
+      given_name:    firstName,
+      family_name:   surname,
+      birthdate:     dob,        // expects DD/MM/YYYY if that's what you stor
+      gender,
+    },
+    autoSignIn: { enabled: true },
+  },
+});
+console.log('signUp result →', result);
+  alert('Check your e‑mail/SMS for the confirmation code!');
+  navigation.navigate('ConfirmCode', { username: contact });
+  return;
+} catch (err: any) {
+  alert(err.message || 'Sign‑up failed');
+}
+};
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowPicker(Platform.OS === 'ios'); // keep open on iOS, close on Android
@@ -138,6 +168,7 @@ export default function SignUp() {
       // Format date as DD/MM/YYYY
       const formatted = `${selectedDate.getDate().toString().padStart(2, '0')}/${(selectedDate.getMonth()+1).toString().padStart(2, '0')}/${selectedDate.getFullYear()}`;
       setDob(formatted);
+      setShowPicker(false);   // fecha o picker ✔
     }
   };
   return (
