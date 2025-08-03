@@ -1,0 +1,407 @@
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  Dimensions,
+  Platform,
+  StatusBar,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackParamList } from "./src/navigation/RootNavigator";
+
+type CommunityScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Community"
+>;
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+const isTablet = screenWidth >= 768;
+
+// Responsive scaling functions
+const scale = (size: number): number => {
+  const baseWidth = 375;
+  const scaleFactor = screenWidth / baseWidth;
+  return Math.round(size * scaleFactor);
+};
+
+const moderateScale = (size: number, factor = 0.5): number => {
+  return size + (scale(size) - size) * factor;
+};
+
+interface Post {
+  id: number;
+  user: string;
+  time: string;
+  content: string;
+  type: "positive" | "warning" | "request";
+  likes: number;
+  comments: number;
+}
+
+export default function CommunityScreen() {
+  const navigation = useNavigation<CommunityScreenNavigationProp>();
+  const [selectedFilter, setSelectedFilter] = useState("Stories");
+
+  const posts: Post[] = [
+    {
+      id: 1,
+      user: "Anonymous",
+      time: "2h ago",
+      content:
+        "Found a really safe café on 5th Street! Great lighting and friendly staff. Perfect for evening study sessions.",
+      type: "positive",
+      likes: 12,
+      comments: 3,
+    },
+    {
+      id: 2,
+      user: "Community Tip",
+      time: "4h ago",
+      content:
+        "Avoid Main Street after dark - poor lighting reported by multiple users.",
+      type: "warning",
+      likes: 8,
+      comments: 5,
+    },
+    {
+      id: 3,
+      user: "Sarah M.",
+      time: "6h ago",
+      content:
+        "Walking buddy needed for tomorrow evening commute from downtown. Anyone interested?",
+      type: "request",
+      likes: 15,
+      comments: 7,
+    },
+  ];
+
+  const filters = ["Stories", "Tips", "Incidents"];
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "positive":
+        return "#10B981";
+      case "warning":
+        return "#F59E0B";
+      case "request":
+        return "#3B82F6";
+      default:
+        return "#6B7280";
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "positive":
+        return "checkmark-circle";
+      case "warning":
+        return "warning";
+      case "request":
+        return "people";
+      default:
+        return "help-circle";
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#6426A9" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Ally Community</Text>
+        </View>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      {/* Welcome Text */}
+      <View style={styles.welcomeContainer}>
+        <Text style={styles.welcomeText}>Welcome to the community!</Text>
+      </View>
+
+      {/* Filter Tabs */}
+      <View style={styles.filterContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {filters.map((filter) => (
+            <TouchableOpacity
+              key={filter}
+              style={[
+                styles.filterBadge,
+                selectedFilter === filter && styles.filterBadgeActive,
+              ]}
+              onPress={() => setSelectedFilter(filter)}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  selectedFilter === filter && styles.filterTextActive,
+                ]}
+              >
+                {filter}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Posts */}
+      <ScrollView
+        style={styles.postsContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {posts.map((post) => (
+          <View key={post.id} style={styles.postCard}>
+            <View style={styles.postHeader}>
+              <View style={styles.userInfo}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{post.user[0]}</Text>
+                </View>
+                <View>
+                  <Text style={styles.userName}>{post.user}</Text>
+                  <Text style={styles.postTime}>{post.time}</Text>
+                </View>
+              </View>
+              <TouchableOpacity style={styles.moreButton}>
+                <Ionicons
+                  name="ellipsis-horizontal"
+                  size={20}
+                  color="#6426A9"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.postContent}>
+              <View style={styles.typeIndicator}>
+                <Ionicons
+                  name={getTypeIcon(post.type) as any}
+                  size={16}
+                  color={getTypeColor(post.type)}
+                />
+                <Text
+                  style={[styles.typeText, { color: getTypeColor(post.type) }]}
+                >
+                  {post.type.charAt(0).toUpperCase() + post.type.slice(1)}
+                </Text>
+              </View>
+              <Text style={styles.postText}>{post.content}</Text>
+            </View>
+
+            <View style={styles.postActions}>
+              <TouchableOpacity style={styles.actionButton}>
+                <Ionicons name="heart-outline" size={20} color="#6426A9" />
+                <Text style={styles.actionText}>{post.likes}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <Ionicons name="chatbubble-outline" size={20} color="#6426A9" />
+                <Text style={styles.actionText}>{post.comments}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* Share Button */}
+      <TouchableOpacity style={styles.shareButton}>
+        <Ionicons name="camera" size={24} color="#FFFFFF" />
+        <Text style={styles.shareButtonText}>Share Your Story</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 40, // Match Features page padding
+    paddingBottom: 16,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: moderateScale(20),
+    fontWeight: "600",
+    color: "#6426A9",
+    marginLeft: 12,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  welcomeContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+  welcomeText: {
+    fontSize: moderateScale(12),
+    color: "#6B7280",
+    textAlign: "center",
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  filterContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: "#FFFFFF",
+  },
+  filterBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 12,
+    borderRadius: 20,
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  filterBadgeActive: {
+    backgroundColor: "#6426A9",
+    borderColor: "#6426A9",
+  },
+  filterText: {
+    fontSize: moderateScale(14),
+    color: "#6B7280",
+    fontWeight: "500",
+  },
+  filterTextActive: {
+    color: "#FFFFFF",
+  },
+  postsContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  postCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  postHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  userInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#E0E7FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  avatarText: {
+    fontSize: moderateScale(12),
+    fontWeight: "600",
+    color: "#6426A9",
+  },
+  userName: {
+    fontSize: moderateScale(14),
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  postTime: {
+    fontSize: moderateScale(12),
+    color: "#6B7280",
+    marginTop: 2,
+  },
+  moreButton: {
+    padding: 4,
+  },
+  postContent: {
+    marginBottom: 12,
+  },
+  typeIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  typeText: {
+    fontSize: moderateScale(12),
+    fontWeight: "500",
+    marginLeft: 4,
+  },
+  postText: {
+    fontSize: moderateScale(14),
+    color: "#374151",
+    lineHeight: 20,
+  },
+  postActions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 20,
+  },
+  actionText: {
+    fontSize: moderateScale(12),
+    color: "#6426A9",
+    marginLeft: 4,
+    fontWeight: "500",
+  },
+  shareButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#6426A9",
+    marginHorizontal: 20,
+    marginVertical: 16,
+    paddingVertical: 16,
+    borderRadius: 25,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  shareButtonText: {
+    fontSize: moderateScale(16),
+    fontWeight: "600",
+    color: "#FFFFFF",
+    marginLeft: 8,
+  },
+});
