@@ -19,7 +19,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 // import { signUp } from 'aws-amplify/auth';
-import { RootStackParamList } from "./src/navigation/RootNavigator";
+import { RootStackParamList } from "../navigation/RootNavigator";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useState, useEffect } from "react";
@@ -61,7 +61,7 @@ export default function SignUp() {
   const [showPicker, setShowPicker] = React.useState(false);
 
   const validatePassword = (password: string) => {
-    const minLength = password.length >= 10;
+    const minLength = password.length >= 6;
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
@@ -92,7 +92,6 @@ export default function SignUp() {
   type Nav = NativeStackNavigationProp<RootStackParamList>;
   const navigation = useNavigation<Nav>();
   const handleSignUp = async () => {
-    navigation.navigate("ConfirmCode", { username: contact });
     // Reset all errors
     setFirstNameError("");
     setSurnameError("");
@@ -185,7 +184,7 @@ export default function SignUp() {
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowPicker(Platform.OS === "ios"); // keep open on iOS, close on Android
+    setShowPicker(Platform.OS === "ios" || Platform.OS === "android"); // keep open on iOS, close on Android
     if (selectedDate) {
       setDate(selectedDate);
       // Format date as DD/MM/YYYY
@@ -196,7 +195,7 @@ export default function SignUp() {
         .toString()
         .padStart(2, "0")}/${selectedDate.getFullYear()}`;
       setDob(formatted);
-      setShowPicker(false); // fecha o picker ✔
+      setShowPicker(false); // close the picker
     }
   };
   return (
@@ -476,10 +475,13 @@ const styles = StyleSheet.create({
   footbar: {
     width: "100%",
     backgroundColor: "#6426A9",
-    paddingVertical: 12,
+    paddingVertical: 18,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 24,
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    marginTop: isTablet ? 48 : 32,
   },
   footbarText: {
     color: "#fff",
@@ -527,6 +529,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
+    marginBottom: isTablet ? 64 : 48, // increased margin below for more separation from footbar
     shadowColor: "#002a2d",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.18,

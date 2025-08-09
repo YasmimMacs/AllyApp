@@ -3,27 +3,36 @@ import React from "react";
 import { Dimensions, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
-import HomeScreen from "../../HomeScreen";
-import SignUp from "../../SignUp";
-import Dashboard from "../../Dashboard";
+import HomeScreen from "../screens/HomeScreen";
+import SignUp from "../screens/SignUp";
+import Dashboard from "../screens/Dashboard";
 import ConfirmCode from "../ConfirmCode";
-import FeaturesScreen from "../../Features";
-import CommunityScreen from "../../Community";
-import MapScreen from "../../Map";
-import BuddyScreen from "../../Buddy";
-import ToolkitScreen from "../../Toolkit";
+import FeaturesScreen from "../screens/Features";
+import CommunityScreen from "../screens/Community";
+import MapScreen from "../screens/Map";
+import BuddyScreen from "../screens/Buddy";
+import ToolkitScreen from "../screens/Toolkit";
+import SettingsScreen from "../screens/Settings";
+
+import ItemsScreen from '../screens/ItemsScreen';
 
 export type RootStackParamList = {
-  Home: undefined;
+  Auth: undefined;
+  Main: undefined;
   SignUp: undefined;
-  Dashboard: undefined;
   ConfirmCode: { username: string };
-  Features: undefined;
-  Community: undefined;
+  Items: undefined;
+};
+
+export type MainTabParamList = {
+  Home: undefined;
   Map: undefined;
+  Community: undefined;
   Buddy: undefined;
   Toolkit: undefined;
+  Settings: undefined;
 };
 
 // ─── helpers ─────────────────────────────────────────────────────────
@@ -33,87 +42,131 @@ const scale = (s: number) => Math.round((width / 375) * s);
 
 // ─── stack ───────────────────────────────────────────────────────────
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<MainTabParamList>();
+
+// Main Tab Navigator
+function MainTabNavigator() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Ionicons.glyphMap;
+
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Map') {
+            iconName = focused ? 'map' : 'map-outline';
+          } else if (route.name === 'Community') {
+            iconName = focused ? 'people' : 'people-outline';
+          } else if (route.name === 'Buddy') {
+            iconName = focused ? 'person' : 'person-outline';
+          } else if (route.name === 'Toolkit') {
+            iconName = focused ? 'briefcase' : 'briefcase-outline';
+          } else if (route.name === 'Settings') {
+            iconName = focused ? 'settings' : 'settings-outline';
+          } else {
+            iconName = 'help-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#6426A9',
+        tabBarInactiveTintColor: '#8B8B8B',
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E5E5',
+          paddingBottom: 8,
+          paddingTop: 4,
+          height: 65,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+        },
+        tabBarItemStyle: {
+          paddingHorizontal: 8,
+        },
+        headerShown: false,
+      })}
+    >
+      <Tab.Screen 
+        name="Home" 
+        component={Dashboard}
+      />
+      <Tab.Screen 
+        name="Map" 
+        component={MapScreen}
+      />
+      <Tab.Screen 
+        name="Community" 
+        component={CommunityScreen}
+      />
+      <Tab.Screen 
+        name="Buddy" 
+        component={BuddyScreen}
+      />
+      <Tab.Screen 
+        name="Toolkit" 
+        component={ToolkitScreen}
+      />
+      <Tab.Screen 
+        name="Settings" 
+        component={SettingsScreen}
+      />
+
+    </Tab.Navigator>
+  );
+}
 
 export default function RootNavigator() {
   return (
     <Stack.Navigator
-      initialRouteName="Home"
+      initialRouteName="Auth"
       screenOptions={{
-        headerStyle: { backgroundColor: "#6426A9" },
-        headerTintColor: "#fff",
-        headerTitleStyle: { fontWeight: "bold", fontSize: scale(18) },
+        headerShown: false,
       }}
     >
-      {/* Home ------------------------------------------------ */}
+      {/* Auth Stack */}
       <Stack.Screen
-        name="Home"
+        name="Auth"
         component={HomeScreen}
-        options={({ navigation }) => ({
-          title: "",
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Dashboard")}
-              style={{
-                marginRight: isTablet ? 24 : 16,
-                padding: isTablet ? scale(8) : 12,
-                justifyContent: "center",
-                alignItems: "center",
-                minWidth: 44,
-                minHeight: 44,
-              }}
-            >
-              <Ionicons name="home" size={isTablet ? 32 : 28} color="#fff" />
-            </TouchableOpacity>
-          ),
-        })}
+       
       />
 
-      {/* Sign‑up -------------------------------------------- */}
-      <Stack.Screen name="SignUp" component={SignUp} options={{ title: "" }} />
-
-      {/* Dashboard ------------------------------------------ */}
-      <Stack.Screen
-        name="Dashboard"
-        component={Dashboard}
-        options={{ title: "" }}
+      <Stack.Screen 
+        name="SignUp" 
+        component={SignUp} 
+       
       />
 
-      {/* Confirm code --------------------------------------- */}
       <Stack.Screen
         name="ConfirmCode"
         component={ConfirmCode}
-        options={{ title: "" }}
+        options={{ 
+          title: "Verify Code",
+          headerShown: true,
+        }}
       />
 
-      {/* Features ------------------------------------------- */}
       <Stack.Screen
-        name="Features"
-        component={FeaturesScreen}
-        options={{ title: "" }}
+        name="Items"
+        component={ItemsScreen}
+        options={{ title: 'Items' }}
       />
-
-      {/* Community ------------------------------------------- */}
+  
+      {/* Main App Stack */}
       <Stack.Screen
-        name="Community"
-        component={CommunityScreen}
-        options={{ title: "" }}
-      />
-
-      {/* Map ------------------------------------------- */}
-      <Stack.Screen name="Map" component={MapScreen} options={{ title: "" }} />
-
-      {/* Buddy ------------------------------------------- */}
-      <Stack.Screen
-        name="Buddy"
-        component={BuddyScreen}
-        options={{ title: "" }}
-      />
-
-      {/* Toolkit ------------------------------------------- */}
-      <Stack.Screen
-        name="Toolkit"
-        component={ToolkitScreen}
-        options={{ title: "" }}
+        name="Main"
+        component={MainTabNavigator}
+        options={{
+          headerShown: false,
+        }}
       />
     </Stack.Navigator>
   );

@@ -14,6 +14,15 @@
     "categories": {
       "auth": {
         "allyab79b52b": {}
+      },
+      "function": {
+        "ally845d9ca4": {
+          "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
+          "s3Key": "amplify-builds/ally845d9ca4-2f745830574e2b6c656f-build.zip"
+        }
+      },
+      "api": {
+        "allyapi": {}
       }
     }
   }

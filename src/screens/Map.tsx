@@ -16,11 +16,11 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
-import { RootStackParamList } from "./src/navigation/RootNavigator";
+import { RootStackParamList } from "../navigation/RootNavigator";
 
 type MapScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "Map"
+  keyof RootStackParamList
 >;
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
@@ -205,14 +205,7 @@ export default function MapScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#6426A9" />
-          </TouchableOpacity>
           <Text style={styles.headerTitle}>Safety Map</Text>
-          <View style={styles.headerSpacer} />
         </View>
 
         {/* Search Bar */}

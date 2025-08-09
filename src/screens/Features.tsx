@@ -14,11 +14,11 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
-import { RootStackParamList } from "./src/navigation/RootNavigator";
+import { RootStackParamList } from "../navigation/RootNavigator";
 
 type FeaturesScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "Features"
+  "Auth"
 >;
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
@@ -81,16 +81,16 @@ export default function FeaturesScreen() {
 
   const handleFeaturePress = (feature: FeatureCard) => {
     if (feature.screen === "Community") {
-      navigation.navigate("Community");
+      navigation.navigate("Main");
     } else if (feature.screen === "Map") {
-      navigation.navigate("Map");
+      navigation.navigate("Main");
     } else if (feature.screen === "Buddy") {
-      navigation.navigate("Buddy");
+      navigation.navigate("Main");
     } else if (feature.screen === "Toolkit") {
-      navigation.navigate("Toolkit");
+      navigation.navigate("Main");
     } else {
-      // For other screens, navigate to Dashboard as fallback
-      navigation.navigate("Dashboard");
+      // For other screens, navigate to Main as fallback
+      navigation.navigate("Main");
     }
   };
 
@@ -159,7 +159,7 @@ export default function FeaturesScreen() {
         <View style={styles.actionButtonsContainer}>
           <TouchableOpacity
             style={styles.loginButton}
-            onPress={() => navigation.navigate("Home")}
+            onPress={() => navigation.navigate("Auth")}
           >
             <Ionicons name="log-out" size={20} color="#FFFFFF" />
             <Text style={styles.loginButtonText}>Logout</Text>

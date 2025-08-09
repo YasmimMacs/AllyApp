@@ -13,13 +13,15 @@ import {
   Pressable,
   TextInput,
 } from "react-native";
+
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "./src/navigation/RootNavigator";
+import { RootStackParamList } from "../navigation/RootNavigator";
 import { useNavigation } from "@react-navigation/native";
+import { signIn, resendSignUpCode, fetchAuthSession, getCurrentUser} from "aws-amplify/auth";
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "Home"
+  "Auth"
 >;
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
@@ -40,6 +42,22 @@ const moderateScale = (size: number, factor = 0.5): number => {
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  
+  // Check if user is already signed in
+  React.useEffect(() => {
+    const checkCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        console.log('Usuário já logado:', user);
+        // If user is already signed in, navigate to main app
+        navigation.navigate("Main");
+      } catch (error) {
+        console.log('Nenhum usuário logado:', error);
+      }
+    };
+    
+    checkCurrentUser();
+  }, [navigation]);
   const buttonScaleAnim = useRef(new Animated.Value(1)).current;
   const loginButtonScaleAnim = useRef(new Animated.Value(1)).current;
   const allyScaleAnim = useRef(new Animated.Value(1)).current;
@@ -115,9 +133,76 @@ export default function HomeScreen() {
     }).start();
   };
 
-  const handleLogin = () => {
-    // Navigate to Features screen when login button is clicked
-    navigation.navigate("Features");
+  const handleLogin = async () => {
+    const username = email.trim().toLowerCase();
+  
+    if (!username || !password) {
+      alert('Please enter both email and password');
+      return;
+    }
+    
+if (__DEV__) {
+  alert('DEV: entrando sem autenticação');
+  navigation.navigate('Main'); // ou sua tela pós-login
+  return;
+}
+
+
+    try {
+      const out = await signIn({ username, password });
+      console.log('signIn output:', JSON.stringify(out, null, 2));
+
+      if (out.isSignedIn) {
+        try {
+          const session = await fetchAuthSession();
+          console.log('Session:', session);
+        } catch (e) {
+          console.log('fetchAuthSession error:', e);
+        }
+        alert('Login successful!');
+        navigation.navigate('Main');
+        return;
+      }
+  
+  
+      const step = out.nextStep?.signInStep;
+      switch (step) {
+        case 'CONFIRM_SIGN_UP':
+          alert('Please confirm your account before logging in.');
+          // opcional: navegar pra ConfirmCode
+          // navigation.navigate('ConfirmCode', { username });
+          break;
+        case 'CONFIRM_SIGN_IN_WITH_TOTP_CODE':
+        case 'CONFIRM_SIGN_IN_WITH_SMS_CODE':
+          alert('MFA required. Enter the verification code.');
+          break;
+        case 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED':
+          alert('You must set a new password.');
+          break;
+        default:
+          alert(`Login needs extra step: ${step || 'unknown'}`);
+      }
+    } catch (err: any) {
+      // Mostra tudo que der pra diagnosticar "unknown"
+      console.log('Login error raw:', err);
+      console.log('Login error keys:', Object.keys(err || {}));
+      try { console.log('Login error JSON:', JSON.stringify(err, null, 2)); } catch {}
+  
+      
+      const code = err?.code || err?.name;
+      if (code === 'UserNotConfirmedException') {
+        alert('Please confirm your account via the email we sent.');
+        // navigation.navigate('ConfirmCode', { username });
+      } else if (code === 'NotAuthorizedException') {
+        alert('Invalid email or password.');
+      } else if (code === 'UserNotFoundException') {
+        alert('Account not found. Create a new account.');
+      } else if (code === 'InvalidParameterException') {
+        alert('Invalid email format.');
+      } else {
+        alert(`Login failed: ${err?.message || String(err)} (Code: ${code || 'unknown'})`);
+      }
+    }
   };
 
   return (
@@ -138,13 +223,11 @@ export default function HomeScreen() {
               ]}
             >
               Ally
+      
             </Animated.Text>
           </Pressable>
         </Text>
-        <Text style={styles.subtitle}>
-          Your Trusted Companion for safe travel
-        </Text>
-
+        
         {/* Login Section */}
         <View style={styles.loginSection}>
           <TextInput
@@ -208,15 +291,7 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
 
-          <Pressable
-            onPress={() => navigation.navigate("Features")}
-            style={({ pressed }) => [
-              styles.featuresButton,
-              pressed && { opacity: 0.9 },
-            ]}
-          >
-            <Text style={styles.featuresButtonText}>Explore Features</Text>
-          </Pressable>
+
         </View>
       </View>
       <View style={styles.footbar}>
@@ -316,13 +391,14 @@ const styles = StyleSheet.create({
     fontSize: isTablet ? 64 : 40,
     fontWeight: "bold",
     color: "#6426A9",
-    lineHeight: isTablet ? 72 : 48,
+    
+    lineHeight: isTablet? 200: 100, 
   },
   allyWordLarge: {
     fontSize: isTablet ? 90 : 56,
     fontWeight: "bold",
     color: "#6426A9",
-    lineHeight: isTablet ? 100 : 64,
+    lineHeight: isTablet? 200: 100,
     letterSpacing: 2,
     textAlign: "center",
   },
@@ -365,27 +441,7 @@ const styles = StyleSheet.create({
     fontSize: isTablet ? 16 : 13,
     letterSpacing: 1,
   },
-  featuresButton: {
-    backgroundColor: "#10B981",
-    borderRadius: 8,
-    paddingVertical: isTablet ? 12 : 8,
-    paddingHorizontal: isTablet ? 24 : 16,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 4,
-    elevation: 2,
-    alignSelf: "center",
-  },
-  featuresButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: isTablet ? 16 : 13,
-    letterSpacing: 1,
-  },
+
   loginSection: {
     width: "100%",
     maxWidth: 400,
@@ -443,7 +499,7 @@ const styles = StyleSheet.create({
   footbar: {
     width: "100%",
     backgroundColor: "#6426A9",
-    paddingVertical: 12,
+    paddingVertical: 18,
     alignItems: "center",
     justifyContent: "center",
     position: "absolute",

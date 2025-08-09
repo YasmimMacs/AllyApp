@@ -1,4 +1,20 @@
 {
+  "api": {
+    "allyapi": {
+      "dependsOn": [
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "ally845d9ca4"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "API Gateway"
+    }
+  },
   "auth": {
     "allyab79b52b": {
       "customAuth": false,
@@ -26,6 +42,31 @@
       },
       "providerPlugin": "awscloudformation",
       "service": "Cognito"
+    }
+  },
+  "function": {
+    "ally845d9ca4": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    }
+  },
+  "parameters": {
+    "AMPLIFY_function_ally845d9ca4_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "ally845d9ca4"
+        }
+      ]
+    },
+    "AMPLIFY_function_ally845d9ca4_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "ally845d9ca4"
+        }
+      ]
     }
   }
 }

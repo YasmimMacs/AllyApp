@@ -7,10 +7,12 @@ import {
   StyleSheet,
   Dimensions,
 } from "react-native";
-// import { confirmSignUp } from 'aws-amplify/auth';
-// import { resendSignUpCode } from 'aws-amplify/auth';
+
+
+import { confirmSignUp, resendSignUpCode } from 'aws-amplify/auth';
+
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "navigation/RootNavigator";
+import { RootStackParamList } from './navigation/RootNavigator';
 
 /* palette + helpers reused */
 const { width: screenWidth } = Dimensions.get("window");
@@ -27,10 +29,9 @@ export default function ConfirmCode({ route, navigation }: Props) {
 
   async function handleConfirm() {
     try {
-      // Temporarily disabled AWS Amplify functionality
-      // await confirmSignUp({username, confirmationCode: code});
+      await confirmSignUp({ username, confirmationCode: code });
       alert("Account confirmed! Please login.");
-      navigation.replace("Home"); // or Dashboard
+      navigation.replace("Main"); // Navigate to main app
     } catch (e: any) {
       alert(e.message);
     }
