@@ -15,6 +15,7 @@ import {
   Alert,
   Switch,
 } from 'react-native';
+import { startLocationSharing, stopLocationSharing } from '../features/LocationService';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
@@ -33,6 +34,24 @@ const scale = (size: number): number => {
 const moderateScale = (size: number, factor = 0.5): number => {
   return size + (scale(size) - size) * factor;
 };
+
+export function LocationSwitch() {
+  const [on, setOn] = useState(false);
+
+  return (
+    <View style={{ padding:16 }}>
+      <Text>Compartilhar localização</Text>
+      <Switch
+        value={on}
+        onValueChange={async (v) => {
+          setOn(v);
+          if (v) await startLocationSharing();
+          else stopLocationSharing();
+        }}
+      />
+    </View>
+  );
+}
 
 export default function SettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();

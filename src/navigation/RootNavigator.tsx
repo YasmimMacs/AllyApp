@@ -12,10 +12,7 @@ import ConfirmCode from "../ConfirmCode";
 import FeaturesScreen from "../screens/Features";
 import CommunityScreen from "../screens/Community";
 import MapScreen from "../screens/Map";
-import BuddyScreen from "../screens/Buddy";
-import ToolkitScreen from "../screens/Toolkit";
 import SettingsScreen from "../screens/Settings";
-
 import ItemsScreen from '../screens/ItemsScreen';
 
 export type RootStackParamList = {
@@ -107,14 +104,8 @@ function MainTabNavigator() {
         name="Community" 
         component={CommunityScreen}
       />
-      <Tab.Screen 
-        name="Buddy" 
-        component={BuddyScreen}
-      />
-      <Tab.Screen 
-        name="Toolkit" 
-        component={ToolkitScreen}
-      />
+  
+  
       <Tab.Screen 
         name="Settings" 
         component={SettingsScreen}

@@ -10,10 +10,8 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { Amplify } from 'aws-amplify';
 import awsconfig from './src/aws-exports.js';
 
-Amplify.configure({
-  ...awsconfig,
-  Analytics: { disabled: true },
-});
+Amplify.configure(awsconfig);
+
 
 export default function App() {
   return (

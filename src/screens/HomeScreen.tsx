@@ -140,13 +140,11 @@ export default function HomeScreen() {
       alert('Please enter both email and password');
       return;
     }
-    
-if (__DEV__) {
-  alert('DEV: entrando sem autenticação');
-  navigation.navigate('Main'); // ou sua tela pós-login
-  return;
-}
-
+    if (__DEV__) {
+      alert('DEV: entrando sem autenticação');
+      navigation.navigate('Main'); // ou sua tela pós-login
+      return;
+    }
 
     try {
       const out = await signIn({ username, password });
@@ -156,6 +154,8 @@ if (__DEV__) {
         try {
           const session = await fetchAuthSession();
           console.log('Session:', session);
+          const user = await getCurrentUser();
+          console.log('User:', user);
         } catch (e) {
           console.log('fetchAuthSession error:', e);
         }
@@ -163,6 +163,7 @@ if (__DEV__) {
         navigation.navigate('Main');
         return;
       }
+      
   
   
       const step = out.nextStep?.signInStep;
