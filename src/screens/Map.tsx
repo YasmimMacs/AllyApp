@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/RootNavigator";
+import { useForegroundPermissions } from "expo-location";
 
 type MapScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
