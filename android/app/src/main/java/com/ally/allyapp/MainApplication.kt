@@ -1,4 +1,4 @@
-package com.anonymous.ReactNativeApp
+package com.ally.allyapp
 
 import android.app.Application
 import android.content.res.Configuration

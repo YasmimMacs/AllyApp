@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "ReactNativeApp",
@@ -15,20 +16,18 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "We need your location to show you the closest stores.",
+        "NSLocationWhenInUseUsageDescription": "We use your location to show nearby safety information and alerts relevant to where you are.",
         "NSCameraUsageDescription": "We need your camera to take photos.",
         "NSPhotoLibraryUsageDescription": "We need access to your photo library to upload/share photos.",
         "NSPhotoLibraryAddUsageDescription": "We need save photos to your photo library."
       },
-      "bundleIdentifier": "com.anonymous.ReactNativeApp"
+      "bundleIdentifier": "com.ally.allyapp",
+      "config": {
+        "googleMapsApiKey": "AIzaSyA6cvNcBRbFGqhQJiHpOQDbfP9YB6j9TWM"
+      }
     },
     "android": {
       "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
@@ -40,18 +39,23 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.ReactNativeApp"
+      "package": "com.ally.allyapp",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyA6cvNcBRbFGqhQJiHpOQDbfP9YB6j9TWM"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
-  },
-  "plugins": [
-    [
-      "expo-location",
-      {
-        "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
-      }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location for safety mapping and real-time location services."
+        }
+      ]
     ]
-  ]
+  }
 }

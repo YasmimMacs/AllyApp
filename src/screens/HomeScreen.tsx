@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,12 +12,16 @@ import {
   Animated,
   Pressable,
   TextInput,
+  Alert,
+  AppState,
 } from "react-native";
 
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useNavigation } from "@react-navigation/native";
-import { signIn, resendSignUpCode, fetchAuthSession, getCurrentUser} from "aws-amplify/auth";
+import { signIn, resendSignUpCode, fetchAuthSession, getCurrentUser, signInWithRedirect, fetchUserAttributes } from "aws-amplify/auth";
+import { Ionicons } from "@expo/vector-icons";
+import oauthHandler from "../utils/oauthHandler";
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -57,7 +61,23 @@ export default function HomeScreen() {
     };
     
     checkCurrentUser();
+    
+    // Initialize OAuth handler
+    oauthHandler.initialize();
+    
+    // Listen for app state changes to check auth status when returning from OAuth
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        // App became active, check if user signed in via OAuth
+        checkAuthStatusAfterOAuth();
+      }
+    });
+    
+    return () => {
+      subscription?.remove();
+    };
   }, [navigation]);
+  
   const buttonScaleAnim = useRef(new Animated.Value(1)).current;
   const loginButtonScaleAnim = useRef(new Animated.Value(1)).current;
   const allyScaleAnim = useRef(new Animated.Value(1)).current;
@@ -68,6 +88,30 @@ export default function HomeScreen() {
   const [isLoginButtonHovered, setIsLoginButtonHovered] = useState(false);
   const [isCreateAccountButtonHovered, setIsCreateAccountButtonHovered] =
     useState(false);
+  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+
+  const checkAuthStatusAfterOAuth = async () => {
+    try {
+      const isAuthenticated = await oauthHandler.checkAuthStatus();
+      if (isAuthenticated) {
+        const userInfo = await oauthHandler.getUserInfo();
+        console.log('User authenticated via OAuth:', userInfo);
+        
+        Alert.alert(
+          'Welcome!', 
+          'Successfully signed in with Google!',
+          [
+            {
+              text: 'Continue',
+              onPress: () => navigation.navigate('Main')
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.log('No OAuth authentication detected');
+    }
+  };
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -131,6 +175,53 @@ export default function HomeScreen() {
       useNativeDriver: true,
       friction: 5,
     }).start();
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (isGoogleSigningIn) return;
+    
+    setIsGoogleSigningIn(true);
+    
+    try {
+      // For React Native, we need to use the web-based OAuth flow
+      // This will open the browser for Google authentication
+      await signInWithRedirect({ provider: 'Google' });
+      
+      console.log('Google Sign-In initiated successfully');
+      
+      // Note: In React Native, the redirect will happen in the browser
+      // When the user returns to the app, we need to check their auth status
+      // This is typically handled in the app's deep linking configuration
+      
+      // For now, we'll show a message that the sign-in was initiated
+      Alert.alert(
+        'Google Sign-In', 
+        'Please complete the sign-in process in your browser. You will be redirected back to the app.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // You can add additional logic here if needed
+              console.log('User acknowledged Google sign-in process');
+            }
+          }
+        ]
+      );
+      
+    } catch (error: any) {
+      console.error('Google Sign-In error:', error);
+      
+      // Handle specific error cases
+      if (error.code === 'UserCancelledException') {
+        Alert.alert('Sign-In Cancelled', 'Google Sign-In was cancelled.');
+      } else if (error.code === 'FederatedSignInException') {
+        Alert.alert('Sign-In Error', 'Failed to sign in with Google. Please try again.');
+      } else {
+        Alert.alert('Sign-In Error', `Google Sign-In failed: ${error.message || 'Unknown error'}`);
+      }
+    } finally {
+      setIsGoogleSigningIn(false);
+    }
   };
 
   const handleLogin = async () => {
@@ -272,27 +363,48 @@ export default function HomeScreen() {
           <Text style={styles.forgotPassword}>Forgotten password?</Text>
         </View>
 
+        {/* Divider */}
+        <View style={styles.dividerContainer}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        {/* Google Sign-In Button */}
+        <Pressable
+          onPress={handleGoogleSignIn}
+          disabled={isGoogleSigningIn}
+          style={({ pressed }) => [
+            styles.googleSignInButton,
+            pressed && { opacity: 0.9 },
+            isGoogleSigningIn && { opacity: 0.6 },
+          ]}
+        >
+          <Ionicons name="logo-google" size={20} color="#4285F4" />
+          <Text style={styles.googleSignInText}>
+            {isGoogleSigningIn ? 'Signing In...' : 'Continue with Google'}
+          </Text>
+        </Pressable>
+
         <View style={styles.buttonContainer}>
           <Pressable
             onHoverIn={() => setIsCreateAccountButtonHovered(true)}
             onHoverOut={() => setIsCreateAccountButtonHovered(false)}
             onPress={() => navigation.navigate("SignUp")}
             style={({ pressed }) => [
-              styles.customButton,
+              styles.createAccountButton,
               pressed && { opacity: 0.9 },
             ]}
           >
             <Text
               style={[
-                styles.customButtonText,
+                styles.createAccountButtonText,
                 isCreateAccountButtonHovered && { color: "#cccccc" },
               ]}
             >
-              Create new Account
+              Create New Account
             </Text>
           </Pressable>
-
-
         </View>
       </View>
       <View style={styles.footbar}>
@@ -512,6 +624,70 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: isTablet ? 15 : 12,
     fontWeight: "500",
+    letterSpacing: 1,
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: isTablet ? 32 : 24,
+    width: "100%",
+    maxWidth: 400,
+    alignSelf: "center",
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ccc",
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    color: "#666",
+    fontSize: isTablet ? 16 : 13,
+  },
+  googleSignInButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    paddingVertical: isTablet ? 12 : 8,
+    paddingHorizontal: isTablet ? 24 : 16,
+    marginTop: isTablet ? 36 : 28,
+    marginBottom: isTablet ? 64 : 48,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  googleSignInText: {
+    marginLeft: 10,
+    color: "#333",
+    fontSize: isTablet ? 16 : 13,
+    fontWeight: "bold",
+  },
+  createAccountButton: {
+    backgroundColor: "#002a2d",
+    borderRadius: 8,
+    paddingVertical: isTablet ? 12 : 8,
+    paddingHorizontal: isTablet ? 24 : 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: isTablet ? 36 : 28,
+    marginBottom: isTablet ? 64 : 48, // increased margin below for more separation from footbar
+    shadowColor: "#002a2d",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 2,
+    alignSelf: "center",
+  },
+  createAccountButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: isTablet ? 16 : 13,
     letterSpacing: 1,
   },
 });

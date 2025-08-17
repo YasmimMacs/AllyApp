@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.ReactNativeApp'
+    namespace 'com.ally.allyapp'
     defaultConfig {
-        applicationId 'com.anonymous.ReactNativeApp'
+        applicationId 'com.ally.allyapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

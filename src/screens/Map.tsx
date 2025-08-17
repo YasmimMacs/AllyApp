@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
+import MapView, { PROVIDER_GOOGLE, Marker, Callout, Region } from "react-native-maps";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
@@ -12,12 +12,24 @@ import {
   TextInput,
   Modal,
   Alert,
+  ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/RootNavigator";
-import { useForegroundPermissions } from "expo-location";
+import {
+  getCurrentPositionAsync,
+  watchPositionAsync,
+  LocationAccuracy,
+  LocationObject,
+  LocationObjectCoords
+} from "expo-location";
+import { useLocationPermission } from "../hooks/useLocationPermission";
+import { LocationPermissionBanner } from "../components/LocationPermissionBanner";
+import { useReverseGeocode } from "../hooks/useReverseGeocode";
+import { Toast } from "../components/Toast";
 
 type MapScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -46,6 +58,7 @@ interface SafetyZone {
   lighting: string;
   crowdLevel: string;
   position: { left: number; top: number };
+  coordinates: { latitude: number; longitude: number };
   recentReports: Array<{
     text: string;
     user: string;
@@ -57,22 +70,44 @@ interface SafetyZone {
 
 export default function MapScreen() {
   const navigation = useNavigation<MapScreenNavigationProp>();
+  const mapRef = useRef<MapView>(null);
+
+  const { status: permissionStatus, requestPermission, openSettings, isLoading: isPermissionLoading } = useLocationPermission();
+  
+  // New optimized reverse geocoding hook
+  const { address: currentAddress, loading: isAddressLoading, error: addressError, fetchFor: fetchAddress } = useReverseGeocode(50);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedZone, setSelectedZone] = useState<SafetyZone | null>(null);
   const [showZoneDetails, setShowZoneDetails] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [currentCoords, setCurrentCoords] = useState<LocationObjectCoords | null>(null);
+  const [locationSubscription, setLocationSubscription] = useState<any>(null);
+  const [mapRegion, setMapRegion] = useState<Region>({
+    latitude: -33.8280, // Default to Sydney coordinates
+    longitude: 151.2153,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  });
+  
+  // Toast state for showing geocoding errors
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<'error' | 'warning' | 'success' | 'info'>('error');
 
   const filters = ["All", "Lighting", "Crowd Level", "Reports", "Safe Places"];
 
   const safetyZones: SafetyZone[] = [
     {
       id: "1",
-      name: "Downtown Plaza",
+      name: "Sydney CBD",
       type: "safe",
       safetyScore: 9,
       lighting: "Excellent",
-      crowdLevel: "Moderate",
+      crowdLevel: "High",
       position: { left: 120, top: 100 },
+      coordinates: { latitude: -33.8688, longitude: 151.2093 },
       recentReports: [
         {
           text: "Well-lit area with good visibility",
@@ -95,12 +130,13 @@ export default function MapScreen() {
     },
     {
       id: "2",
-      name: "Park Street",
+      name: "Bondi Beach",
       type: "caution",
       safetyScore: 6,
       lighting: "Fair",
-      crowdLevel: "Low",
+      crowdLevel: "Moderate",
       position: { left: 250, top: 150 },
+      coordinates: { latitude: -33.8915, longitude: 151.2767 },
       recentReports: [
         {
           text: "Poor lighting after sunset",
@@ -109,7 +145,7 @@ export default function MapScreen() {
           type: "warning",
         },
         {
-          text: "Limited foot traffic",
+          text: "Limited foot traffic at night",
           user: "Community",
           time: "2d ago",
           type: "warning",
@@ -123,12 +159,13 @@ export default function MapScreen() {
     },
     {
       id: "3",
-      name: "Industrial Area",
+      name: "Redfern Area",
       type: "unsafe",
       safetyScore: 3,
       lighting: "Poor",
-      crowdLevel: "Very Low",
+      crowdLevel: "Low",
       position: { left: 80, top: 250 },
+      coordinates: { latitude: -33.8936, longitude: 151.2041 },
       recentReports: [
         {
           text: "Multiple safety incidents reported",
@@ -150,6 +187,114 @@ export default function MapScreen() {
       ],
     },
   ];
+
+  // Get current position when permission is granted
+  useEffect(() => {
+    if (permissionStatus === 'granted' && !currentCoords) {
+      getCurrentPosition();
+    }
+  }, [permissionStatus, currentCoords]);
+
+  // Start location tracking when permission is granted and we have initial position
+  useEffect(() => {
+    if (permissionStatus === 'granted' && currentCoords) {
+      startLocationTracking();
+    }
+  }, [permissionStatus, currentCoords]);
+
+  // Show toast when there's a geocoding error
+  useEffect(() => {
+    if (addressError) {
+      setToastMessage(`Geocoding error: ${addressError}`);
+      setToastType('error');
+      setShowToast(true);
+    }
+  }, [addressError]);
+
+  const getCurrentPosition = async () => {
+    try {
+      setIsLoadingLocation(true);
+      console.log('Getting current position...');
+      
+      const location = await getCurrentPositionAsync({
+        accuracy: LocationAccuracy.High,
+      });
+      
+      console.log('Current position obtained:', location.coords);
+      const newCoords = location.coords;
+      setCurrentCoords(newCoords);
+      
+      // Use new hook to get address
+      await fetchAddress(newCoords.latitude, newCoords.longitude);
+      
+      // Update map region to center on user's location
+      const newRegion = {
+        latitude: newCoords.latitude,
+        longitude: newCoords.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      };
+      setMapRegion(newRegion);
+      
+      // Animate map to user's location
+      if (mapRef.current) {
+        console.log('Animating map to user location...');
+        mapRef.current.animateToRegion(newRegion, 1000);
+      }
+      
+      setIsLoadingLocation(false);
+    } catch (error) {
+      console.error('Error getting current position:', error);
+      setIsLoadingLocation(false);
+      Alert.alert('Location Error', 'Failed to get your current location. Please try again.');
+    }
+  };
+
+  const startLocationTracking = () => {
+    console.log('Starting location tracking...');
+    
+    try {
+      const subscription = watchPositionAsync(
+        {
+          accuracy: LocationAccuracy.High,
+          timeInterval: 10000, // 10 seconds
+          distanceInterval: 50, // 50 meters - matches our hook threshold
+        },
+        (location: LocationObject) => {
+          console.log('Location update received:', location.coords);
+          const newCoords = location.coords;
+          setCurrentCoords(newCoords);
+          
+          // Use new hook to get address only when position changes significantly
+          fetchAddress(newCoords.latitude, newCoords.longitude);
+          
+          // Update map region to center on user's location
+          const newRegion = {
+            latitude: newCoords.latitude,
+            longitude: newCoords.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          };
+          setMapRegion(newRegion);
+        }
+      ).then(sub => {
+        console.log('Location subscription created successfully');
+        setLocationSubscription(sub);
+      }).catch(error => {
+        console.error("Location tracking error:", error);
+        Alert.alert('Location Error', 'Failed to start location tracking. Please check your location settings.');
+      });
+    } catch (error) {
+      console.error('Error in startLocationTracking:', error);
+    }
+  };
+
+  // Handle map region change completion (when user stops panning/zooming)
+  const handleRegionChangeComplete = (region: Region) => {
+    console.log('Map region change complete:', region);
+    // Only fetch address when user finishes moving the map
+    fetchAddress(region.latitude, region.longitude);
+  };
 
   const getZoneColor = (type: string) => {
     switch (type) {
@@ -196,19 +341,100 @@ export default function MapScreen() {
     );
   };
 
+  const getCurrentSafetyStatus = () => {
+    if (!currentCoords) return { status: "Unknown", color: "#6B7280", icon: "help-circle" };
+    
+    // Find the closest safety zone
+    let closestZone = safetyZones[0];
+    let minDistance = Number.MAX_VALUE;
+    
+    safetyZones.forEach(zone => {
+      const distance = Math.sqrt(
+        Math.pow(zone.coordinates.latitude - currentCoords.latitude, 2) +
+        Math.pow(zone.coordinates.longitude - currentCoords.longitude, 2)
+      );
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestZone = zone;
+      }
+    });
+
+    return {
+      status: `You are in a ${closestZone.type} area`,
+      color: getZoneColor(closestZone.type),
+      icon: getZoneIcon(closestZone.type),
+      zone: closestZone
+    };
+  };
+
+  const safetyStatus = getCurrentSafetyStatus();
+
+  const filteredSafetyZones = safetyZones.filter(zone => {
+    if (selectedFilter === "All") return true;
+    if (selectedFilter === "Lighting") return zone.lighting === "Excellent";
+    if (selectedFilter === "Crowd Level") return zone.crowdLevel === "Moderate" || zone.crowdLevel === "High";
+    if (selectedFilter === "Reports") return zone.recentReports.length > 0;
+    if (selectedFilter === "Safe Places") return zone.type === "safe";
+    return true;
+  });
+
+  // Cleanup location subscription
+  useEffect(() => {
+    return () => {
+      if (locationSubscription) {
+        console.log('Cleaning up location subscription...');
+        locationSubscription.remove();
+      }
+    };
+  }, [locationSubscription]);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Safety Map</Text>
-        </View>
+      {/* Toast for showing geocoding errors */}
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        visible={showToast}
+        onClose={() => setShowToast(false)}
+        duration={5000}
+      />
 
+      {/* Header - Fixed at top */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Safety Map</Text>
+      </View>
+
+      {/* Location Permission Banner */}
+      <LocationPermissionBanner
+        status={permissionStatus}
+        onRequestPermission={requestPermission}
+        onOpenSettings={openSettings}
+        isLoading={isPermissionLoading}
+      />
+
+      {/* Current Location Status - Only show when we have coordinates */}
+      {currentCoords && (
+        <View style={styles.locationStatusContainer}>
+          <View style={styles.locationStatusContent}>
+            <Ionicons name="location" size={20} color="#6426A9" />
+            <View style={styles.addressContainer}>
+              <Text style={styles.locationStatusText}>
+                {isAddressLoading ? 'Getting address...' : currentAddress}
+              </Text>
+              {addressError && (
+                <Text style={styles.addressErrorText}>
+                  {addressError}
+                </Text>
+              )}
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Search and Filters - Fixed above map */}
+      <View style={styles.controlsContainer}>
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <View style={styles.searchInputContainer}>
@@ -268,60 +494,102 @@ export default function MapScreen() {
             <Text style={styles.legendText}>Unsafe</Text>
           </View>
         </View>
+      </View>
 
-        {/* Map Container */}
-        <View style={styles.mapContainer}>
-          <View style={styles.mapBackground}>
-            {/* Map content would go here - simplified for now */}
-            <View style={styles.mapPlaceholder}>
-              <Ionicons name="map" size={48} color="#6426A9" />
-              <Text style={styles.mapPlaceholderText}>Interactive Map</Text>
-              <Text style={styles.mapPlaceholderSubtext}>
-                Map integration will be implemented here
-              </Text>
-            </View>
+      {/* Map Container - Dedicated container with flex:1 */}
+      <View style={styles.mapContainer}>
+        {isLoadingLocation || permissionStatus !== 'granted' ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#6426A9" />
+            <Text style={styles.loadingText}>
+              {permissionStatus !== 'granted' 
+                ? 'Location permission required' 
+                : 'Getting your location...'
+              }
+            </Text>
+          </View>
+        ) : (
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            provider={PROVIDER_GOOGLE}
+            initialRegion={mapRegion}
+            showsUserLocation={true}
+            showsMyLocationButton={true}
+            showsCompass={true}
+            showsScale={true}
+            showsTraffic={false}
+            showsBuildings={true}
+            showsIndoors={true}
+            onRegionChange={setMapRegion}
+            onRegionChangeComplete={handleRegionChangeComplete}
+            onMapReady={() => {
+              console.log('Map is ready!');
+              console.log('Map dimensions:', { flex: 1 });
+              console.log('Initial region:', mapRegion);
 
+              // Center map on user location when ready
+              if (currentCoords && mapRef.current) {
+                const newRegion = {
+                  latitude: currentCoords.latitude,
+                  longitude: currentCoords.longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                };
+                mapRef.current.animateToRegion(newRegion, 1000);
+              }
+            }}
+            onLayout={() => console.log('Map layout completed')}
+          >
             {/* Safety Zone Markers */}
-            {safetyZones.map((zone) => (
-              <TouchableOpacity
+            {filteredSafetyZones.map((zone) => (
+              <Marker
                 key={zone.id}
-                style={[
-                  styles.zoneMarker,
-                  {
-                    backgroundColor: getZoneColor(zone.type),
-                    left: zone.position.left,
-                    top: zone.position.top,
-                  },
-                ]}
+                coordinate={zone.coordinates}
+                title={zone.name}
+                description={`Safety Score: ${zone.safetyScore}/10`}
                 onPress={() => handleZonePress(zone)}
+                pinColor={getZoneColor(zone.type)}
               >
-                <Ionicons
-                  name={getZoneIcon(zone.type) as any}
-                  size={20}
-                  color="#FFFFFF"
-                />
-              </TouchableOpacity>
+                <Callout>
+                  <View style={styles.calloutContainer}>
+                    <Text style={styles.calloutTitle}>{zone.name}</Text>
+                    <Text style={styles.calloutSubtitle}>
+                      Safety Score: {zone.safetyScore}/10
+                    </Text>
+                    <Text style={styles.calloutType}>
+                      {zone.type.charAt(0).toUpperCase() + zone.type.slice(1)} Area
+                    </Text>
+                  </View>
+                </Callout>
+              </Marker>
             ))}
 
             {/* Current Location Marker */}
-            <View style={styles.currentLocationMarker}>
-              <View style={styles.currentLocationDot} />
-              <View style={styles.currentLocationPulse} />
-            </View>
+            {currentCoords && (
+              <Marker
+                coordinate={currentCoords}
+                title="Your Location"
+                description={currentAddress || "Current Location"}
+                pinColor="#6426A9"
+              />
+            )}
+          </MapView>
+        )}
 
-            {/* Report Button */}
-            <TouchableOpacity style={styles.reportButton}>
-              <Ionicons name="add" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        </View>
+        {/* Report Button - Floating over map */}
+        <TouchableOpacity style={styles.reportButton}>
+          <Ionicons name="add" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
 
-        {/* Status Bar */}
-        <View style={styles.statusBar}>
-          <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-          <Text style={styles.statusText}>You are in a safe area</Text>
-        </View>
-      </ScrollView>
+      {/* Status Bar - Fixed below map */}
+      <View style={[styles.statusBar, { backgroundColor: safetyStatus.color + "20", borderColor: safetyStatus.color }]}>
+        <Ionicons name={safetyStatus.icon as any} size={20} color={safetyStatus.color} />
+        <Text style={[styles.statusText, { color: safetyStatus.color }]}>
+          {safetyStatus.status}
+        </Text>
+      </View>
 
       {/* Zone Details Modal */}
       <Modal
@@ -429,21 +697,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F8FAFC",
   },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
-  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingTop: 20,
     paddingBottom: 16,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 12,
+    paddingHorizontal: 20,
+    backgroundColor: "#F8FAFC",
   },
   headerTitle: {
     fontSize: moderateScale(20),
@@ -452,8 +712,38 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
   },
-  headerSpacer: {
-    width: 40,
+  locationStatusContainer: {
+    backgroundColor: "#E0E7FF",
+    borderLeftWidth: 4,
+    borderLeftColor: "#6426A9",
+    borderRadius: 8,
+    padding: 12,
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  locationStatusContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  addressContainer: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  locationStatusText: {
+    fontSize: moderateScale(14),
+    fontWeight: "500",
+    color: "#374151",
+  },
+  addressErrorText: {
+    fontSize: moderateScale(12),
+    color: "#EF4444",
+    marginTop: 4,
+    fontStyle: "italic",
+  },
+  controlsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    backgroundColor: "#F8FAFC",
   },
   searchContainer: {
     marginBottom: 16,
@@ -521,15 +811,24 @@ const styles = StyleSheet.create({
     color: "#6426A9",
   },
   mapContainer: {
+    flex: 1,
+    position: "relative",
+    marginHorizontal: 20,
     marginBottom: 16,
-  },
-  mapBackground: {
-    width: "100%",
-    height: 300,
-    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     overflow: "hidden",
-    position: "relative",
+  },
+  map: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -539,61 +838,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  mapPlaceholder: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F8FAFC",
-  },
-  mapPlaceholderText: {
-    fontSize: moderateScale(16),
-    fontWeight: "600",
+  loadingText: {
+    fontSize: moderateScale(14),
     color: "#6426A9",
-    marginTop: 8,
-  },
-  mapPlaceholderSubtext: {
-    fontSize: moderateScale(12),
-    color: "#6B7280",
-    marginTop: 4,
-  },
-  zoneMarker: {
-    position: "absolute",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  currentLocationMarker: {
-    position: "absolute",
-    bottom: 24,
-    right: 24,
-  },
-  currentLocationDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: "#6426A9",
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
-  currentLocationPulse: {
-    position: "absolute",
-    top: -4,
-    left: -4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#6426A9",
-    opacity: 0.3,
+    marginTop: 12,
   },
   reportButton: {
     position: "absolute",
@@ -613,22 +861,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+    zIndex: 10,
   },
   statusBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#D1FAE5",
     borderWidth: 1,
-    borderColor: "#10B981",
     borderRadius: 8,
     padding: 12,
+    marginHorizontal: 20,
     marginBottom: 20,
   },
   statusText: {
     fontSize: moderateScale(14),
     fontWeight: "500",
-    color: "#065F46",
     marginLeft: 8,
   },
   modalOverlay: {
@@ -780,5 +1027,29 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontWeight: "500",
     color: "#FFFFFF",
+  },
+  calloutContainer: {
+    width: 200,
+    padding: 10,
+    backgroundColor: "white",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  calloutTitle: {
+    fontSize: moderateScale(14),
+    fontWeight: "bold",
+    color: "#374151",
+    marginBottom: 4,
+  },
+  calloutSubtitle: {
+    fontSize: moderateScale(12),
+    color: "#6B7280",
+    marginBottom: 4,
+  },
+  calloutType: {
+    fontSize: moderateScale(12),
+    color: "#6426A9",
+    fontWeight: "500",
   },
 });
