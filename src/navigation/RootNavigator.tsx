@@ -4,6 +4,7 @@ import { Dimensions, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { useAuth } from "../contexts/AuthContext";
 
 import HomeScreen from "../screens/HomeScreen";
 import SignUp from "../screens/SignUp";
@@ -116,34 +117,43 @@ function MainTabNavigator() {
 }
 
 export default function RootNavigator() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Show loading screen while checking authentication
+  if (isLoading) {
+    return null; // You can create a proper loading component here
+  }
+
   return (
     <Stack.Navigator
-      initialRouteName="Auth"
+      initialRouteName={isAuthenticated ? "Main" : "Auth"}
       screenOptions={{
         headerShown: false,
       }}
     >
-      {/* Auth Stack */}
-      <Stack.Screen
-        name="Auth"
-        component={HomeScreen}
-       
-      />
+      {/* Auth Stack - Only show when NOT authenticated */}
+      {!isAuthenticated && (
+        <>
+          <Stack.Screen
+            name="Auth"
+            component={HomeScreen}
+          />
 
-      <Stack.Screen 
-        name="SignUp" 
-        component={SignUp} 
-       
-      />
+          <Stack.Screen 
+            name="SignUp" 
+            component={SignUp} 
+          />
 
-      <Stack.Screen
-        name="ConfirmCode"
-        component={ConfirmCode}
-        options={{ 
-          title: "Verify Code",
-          headerShown: true,
-        }}
-      />
+          <Stack.Screen
+            name="ConfirmCode"
+            component={ConfirmCode}
+            options={{ 
+              title: "Verify Code",
+              headerShown: true,
+            }}
+          />
+        </>
+      )}
 
       <Stack.Screen
         name="Items"
@@ -151,14 +161,16 @@ export default function RootNavigator() {
         options={{ title: 'Items' }}
       />
   
-      {/* Main App Stack */}
-      <Stack.Screen
-        name="Main"
-        component={MainTabNavigator}
-        options={{
-          headerShown: false,
-        }}
-      />
+      {/* Main App Stack - Only show when authenticated */}
+      {isAuthenticated && (
+        <Stack.Screen
+          name="Main"
+          component={MainTabNavigator}
+          options={{
+            headerShown: false,
+          }}
+        />
+      )}
     </Stack.Navigator>
   );
 }

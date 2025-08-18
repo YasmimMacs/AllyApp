@@ -12,13 +12,15 @@ import {
   Pressable,
   TextInput,
   TouchableWithoutFeedback,
+  TouchableOpacity,
 } from "react-native";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-// import { signUp } from 'aws-amplify/auth';
+import { signUp } from 'aws-amplify/auth';
+import awsconfig from '../aws-exports.js';
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -44,24 +46,25 @@ export default function SignUp() {
   const [firstName, setFirstName] = React.useState("");
   const [surname, setSurname] = React.useState("");
   const [dob, setDob] = React.useState("");
-  const [gender, setGender] = React.useState("");
-  const [contact, setContact] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [mobile, setMobile] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [firstNameError, setFirstNameError] = React.useState("");
   const [surnameError, setSurnameError] = React.useState("");
   const [dobError, setDobError] = React.useState("");
-  const [genderError, setGenderError] = React.useState("");
-  const [contactError, setContactError] = React.useState("");
+  const [emailError, setEmailError] = React.useState("");
+  const [mobileError, setMobileError] = React.useState("");
   const [passwordError, setPasswordError] = React.useState("");
   const [confirmPasswordError, setConfirmPasswordError] = React.useState("");
   const [isButtonHovered, setIsButtonHovered] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
   // DateTimePicker state
   const [date, setDate] = React.useState(new Date());
   const [showPicker, setShowPicker] = React.useState(false);
 
   const validatePassword = (password: string) => {
-    const minLength = password.length >= 6;
+    const minLength = password.length >= 8;
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
@@ -96,8 +99,8 @@ export default function SignUp() {
     setFirstNameError("");
     setSurnameError("");
     setDobError("");
-    setGenderError("");
-    setContactError("");
+    setEmailError("");
+    setMobileError("");
     setPasswordError("");
     setConfirmPasswordError("");
 
@@ -119,13 +122,22 @@ export default function SignUp() {
       hasErrors = true;
     }
 
-    if (!gender) {
-      setGenderError("Select a Gender");
+    if (!email.trim()) {
+      setEmailError("Enter Email address");
+      hasErrors = true;
+    } else if (!email.includes("@")) {
+      setEmailError("Enter a valid email address");
       hasErrors = true;
     }
 
-    if (!contact.trim()) {
-      setContactError("Enter Mobile number or email");
+    if (!mobile.trim()) {
+      setMobileError("Enter Mobile number");
+      hasErrors = true;
+    } else if (mobile.length < 10) {
+      setMobileError("Enter a valid mobile number (at least 10 digits)");
+      hasErrors = true;
+    } else if (!/^[0-9+\-\s()]+$/.test(mobile)) {
+      setMobileError("Mobile number can only contain numbers, +, -, spaces, and parentheses");
       hasErrors = true;
     }
 
@@ -153,38 +165,97 @@ export default function SignUp() {
     if (hasErrors) {
       return;
     }
-    /* ─── SIGN‑UP temporarily disabled ─── */
+    
+    setIsLoading(true);
+    
     try {
-      // Temporarily disabled AWS Amplify functionality
-      // const result = await signUp({
-      //   username: contact, // email or phone
-      //   password,
-      //   options: {
-      //     userAttributes: {
-      //       email: contact.includes("@") ? contact : undefined,
-      //       phone_number: !contact.includes("@") ? contact : undefined,
-      //       given_name: firstName,
-      //       family_name: surname,
-      //       birthdate: dob, // expects DD/MM/YYYY if that's what you stor
-      //       gender,
-      //     },
-      //     autoSignIn: { enabled: true },
-      //   },
-      // });
-      // console.log("signUp result →", result);
+      // Format date for AWS Cognito (YYYY-MM-DD)
+      const formatDateForCognito = (dateStr: string) => {
+        const [day, month, year] = dateStr.split('/');
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      };
+
+      // Format phone number for AWS Cognito (E.164 format)
+      const formatPhoneForCognito = (phone: string) => {
+        // Remove all non-digit characters
+        const digits = phone.replace(/\D/g, '');
+        
+        // Handle Australian phone numbers (assuming you're in Australia based on region)
+        if (digits.startsWith('0')) {
+          // Convert 04XX XXX XXX to +614XX XXX XXX
+          return `+61${digits.substring(1)}`;
+        } else if (digits.startsWith('4') && digits.length === 9) {
+          // Already in 4XX XXX XXX format, add +61
+          return `+61${digits}`;
+        } else if (digits.startsWith('61')) {
+          // Already has country code
+          return `+${digits}`;
+        } else {
+          // Default: add +61 for Australian numbers
+          return `+61${digits}`;
+        }
+      };
+
+      // Prepare user attributes for AWS Cognito
+      const userAttributes = {
+        email: email,
+        phone_number: formatPhoneForCognito(mobile),
+        given_name: firstName,
+        family_name: surname,
+        birthdate: formatDateForCognito(dob),
+      };
+      
+      console.log("Attempting AWS Cognito signup with:", {
+        username: email,
+        userAttributes: userAttributes
+      });
+      
+      // Log AWS configuration for debugging
+      console.log("AWS Region:", awsconfig.aws_cognito_region);
+      console.log("User Pool ID:", awsconfig.aws_user_pools_id);
+      console.log("Verification mechanisms:", awsconfig.aws_cognito_verification_mechanisms);
+      
+      const result = await signUp({
+        username: email, // use email as username
+        password,
+        options: {
+          userAttributes: userAttributes,
+          autoSignIn: { enabled: true },
+        },
+      });
+      console.log("signUp result →", result);
       alert(
         "Account created successfully! Check your e‑mail/SMS for the confirmation code!"
       );
-      navigation.navigate("ConfirmCode", { username: contact });
+      navigation.navigate("ConfirmCode", { username: email });
       return;
     } catch (err: any) {
-      alert("Sign‑up completed successfully!");
-      navigation.navigate("ConfirmCode", { username: contact });
+      console.error("SignUp error:", err);
+      
+      // Better error handling for AWS Cognito
+      let errorMessage = "Sign-up failed: ";
+      
+      if (err.name === 'UsernameExistsException') {
+        errorMessage += "An account with this email already exists. Please use a different email or try logging in.";
+      } else if (err.name === 'InvalidPasswordException') {
+        errorMessage += "Password does not meet requirements. Please ensure it has at least 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character.";
+      } else if (err.name === 'InvalidParameterException') {
+        errorMessage += "Invalid input parameters. Please check your email and phone number format.";
+      } else if (err.name === 'CodeDeliveryFailureException') {
+        errorMessage += "Failed to send verification code. Please check your email address and try again.";
+      } else if (err.message) {
+        errorMessage += err.message;
+      } else {
+        errorMessage += "Unknown error occurred. Please try again.";
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowPicker(Platform.OS === "ios" || Platform.OS === "android"); // keep open on iOS, close on Android
     if (selectedDate) {
       setDate(selectedDate);
       // Format date as DD/MM/YYYY
@@ -195,7 +266,12 @@ export default function SignUp() {
         .toString()
         .padStart(2, "0")}/${selectedDate.getFullYear()}`;
       setDob(formatted);
-      setShowPicker(false); // close the picker
+      
+      // On iOS, keep the picker open for spinner mode
+      // On Android, close the picker after selection
+      if (Platform.OS === "android") {
+        setShowPicker(false);
+      }
     }
   };
   return (
@@ -264,67 +340,53 @@ export default function SignUp() {
             />
             {dobError ? <Text style={styles.errorText}>{dobError}</Text> : null}
             {showPicker && (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                display="spinner"
-                onChange={handleDateChange}
-                maximumDate={new Date()}
-              />
-            )}
-            <View style={styles.genderContainer}>
-              <Text style={styles.genderLabel}>Gender:</Text>
-              <View style={styles.genderOptions}>
-                <Pressable
-                  style={[
-                    styles.genderOption,
-                    gender === "Masculine" && styles.genderOptionSelected,
-                  ]}
-                  onPress={() => setGender("Masculine")}
-                >
-                  <Text
-                    style={[
-                      styles.genderOptionText,
-                      gender === "Masculine" && styles.genderOptionTextSelected,
-                    ]}
+              <View style={styles.datePickerContainer}>
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="spinner"
+                  onChange={handleDateChange}
+                  maximumDate={new Date()}
+                />
+                {Platform.OS === "ios" && (
+                  <TouchableOpacity
+                    style={styles.closePickerButton}
+                    onPress={() => setShowPicker(false)}
                   >
-                    Masculine
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={[
-                    styles.genderOption,
-                    gender === "Feminine" && styles.genderOptionSelected,
-                  ]}
-                  onPress={() => setGender("Feminine")}
-                >
-                  <Text
-                    style={[
-                      styles.genderOptionText,
-                      gender === "Feminine" && styles.genderOptionTextSelected,
-                    ]}
-                  >
-                    Feminine
-                  </Text>
-                </Pressable>
+                    <Text style={styles.closePickerButtonText}>Done</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-            </View>
-            {genderError ? (
-              <Text style={styles.errorText}>{genderError}</Text>
-            ) : null}
-            <TextInput
-              style={styles.input}
-              placeholder="Mobile number or email"
-              placeholderTextColor="#999"
-              value={contact}
-              onChangeText={setContact}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-            />
-            {contactError ? (
-              <Text style={styles.errorText}>{contactError}</Text>
-            ) : null}
+            )}
+            
+            
+                         <TextInput
+               style={styles.input}
+               placeholder="Email address"
+               placeholderTextColor="#999"
+               value={email}
+               onChangeText={setEmail}
+               autoCapitalize="none"
+               autoCorrect={false}
+               keyboardType="email-address"
+             />
+             {emailError ? (
+               <Text style={styles.errorText}>{emailError}</Text>
+             ) : null}
+             
+             <TextInput
+               style={styles.input}
+               placeholder="Mobile number"
+               placeholderTextColor="#999"
+               value={mobile}
+               onChangeText={setMobile}
+               autoCapitalize="none"
+               autoCorrect={false}
+               keyboardType="phone-pad"
+             />
+             {mobileError ? (
+               <Text style={styles.errorText}>{mobileError}</Text>
+             ) : null}
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.passwordInput}
@@ -359,9 +421,11 @@ export default function SignUp() {
               onPress={handleSignUp}
               onHoverIn={() => setIsButtonHovered(true)}
               onHoverOut={() => setIsButtonHovered(false)}
+              disabled={isLoading}
               style={({ pressed }) => [
                 styles.signupButton,
                 pressed && { opacity: 0.9 },
+                isLoading && { opacity: 0.6 },
               ]}
             >
               <Text
@@ -370,9 +434,27 @@ export default function SignUp() {
                   isButtonHovered && { color: "#cccccc" },
                 ]}
               >
-                Sign up
+                {isLoading ? "Creating Account..." : "Sign up"}
               </Text>
             </Pressable>
+            
+            <Text style={styles.orText}>or</Text>
+            
+            <Pressable
+              onPress={() => navigation.navigate("Auth")}
+              style={({ pressed }) => [
+                styles.loginButton,
+                pressed && { opacity: 0.9 },
+              ]}
+            >
+              <Text style={styles.loginButtonText}>
+                Log in
+              </Text>
+            </Pressable>
+            
+            <Text style={styles.loginPromptText}>
+              If you already have an account
+            </Text>
           </View>
         </View>
       </ScrollView>
@@ -529,7 +611,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
-    marginBottom: isTablet ? 64 : 48, // increased margin below for more separation from footbar
+    marginBottom: 8, // reduced from 16 to 8 for closer spacing to "or"
     shadowColor: "#002a2d",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.18,
@@ -543,6 +625,7 @@ const styles = StyleSheet.create({
     fontSize: isTablet ? 16 : 13,
     letterSpacing: 1,
   },
+  
   nameRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -561,43 +644,7 @@ const styles = StyleSheet.create({
     marginBottom: 12, // match the regular input margin
     marginHorizontal: 3,
   },
-  genderContainer: {
-    width: "100%",
-    marginBottom: 12,
-  },
-  genderLabel: {
-    fontSize: isTablet ? 15 : 13,
-    color: "#6426A9",
-    fontWeight: "500",
-    marginBottom: 8,
-  },
-  genderOptions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  genderOption: {
-    flex: 1,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    paddingVertical: isTablet ? 10 : 8,
-    paddingHorizontal: isTablet ? 12 : 8,
-    borderWidth: 1,
-    borderColor: "#e0d6ef",
-    alignItems: "center",
-    marginHorizontal: 3,
-  },
-  genderOptionSelected: {
-    backgroundColor: "#6426A9",
-    borderColor: "#6426A9",
-  },
-  genderOptionText: {
-    fontSize: isTablet ? 15 : 13,
-    color: "#999",
-    fontWeight: "500",
-  },
-  genderOptionTextSelected: {
-    color: "#fff",
-  },
+
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -621,5 +668,59 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 8,
     marginLeft: 4,
+  },
+  datePickerContainer: {
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  closePickerButton: {
+    backgroundColor: "#6426A9",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  closePickerButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  loginButton: {
+    backgroundColor: "#6426A9",
+    borderRadius: 8,
+    paddingVertical: isTablet ? 12 : 8,
+    paddingHorizontal: isTablet ? 40 : 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8, // reduced from 24 to 8 for closer spacing to "or"
+    marginBottom: 16,
+    shadowColor: "#6426A9",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 2,
+    alignSelf: "center",
+  },
+  loginButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: isTablet ? 16 : 13,
+    letterSpacing: 1,
+  },
+  loginPromptText: {
+    color: "#6426A9",
+    fontSize: isTablet ? 14 : 12,
+    textAlign: "center",
+    marginTop: 0,
+    marginBottom: 16,
+    fontWeight: "500",
+  },
+  orText: {
+    color: "#6426A9",
+    fontSize: isTablet ? 16 : 14,
+    textAlign: "center",
+    marginVertical: 8,
+    fontWeight: "600",
   },
 });

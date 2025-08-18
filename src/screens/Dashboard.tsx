@@ -12,11 +12,13 @@ import {
   Modal, 
   TouchableWithoutFeedback,
   Image,
+  TextInput,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../contexts/AuthContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
@@ -34,13 +36,88 @@ const moderateScale = (size: number, factor = 0.5): number => {
 
 export default function Dashboard() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { isAuthenticated, signIn } = useAuth();
   const [showLogout, setShowLogout] = useState(false);
+  
+  // Login form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   const handleLogout = () => {
     setShowLogout(false);
     navigation.navigate('Auth');
   };
 
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      setLoginError('Please enter both email and password');
+      return;
+    }
+
+    setIsLoading(true);
+    setLoginError('');
+
+    try {
+      await signIn(email, password);
+      // Navigation will be handled automatically by AuthContext
+    } catch (error: any) {
+      setLoginError(error.message || 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Show login form if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loginContainer}>
+          <Text style={styles.loginTitle}>Welcome to Ally</Text>
+          <Text style={styles.loginSubtitle}>Please sign in to continue</Text>
+          
+          <TextInput
+            style={styles.loginInput}
+            placeholder="Email address"
+            placeholderTextColor="#999"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+          />
+          
+          <TextInput
+            style={styles.loginInput}
+            placeholder="Password"
+            placeholderTextColor="#999"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={true}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          
+          {loginError ? (
+            <Text style={styles.errorText}>{loginError}</Text>
+          ) : null}
+          
+          <Pressable
+            style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            <Text style={styles.loginButtonText}>
+              {isLoading ? "Signing In..." : "Sign In"}
+            </Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show main dashboard if authenticated
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -365,5 +442,67 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '500',
     textAlign: 'center',
+  },
+  // Login form styles
+  loginContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    backgroundColor: '#fae7f7',
+  },
+  loginTitle: {
+    fontSize: isTablet ? 36 : 28,
+    fontWeight: 'bold',
+    color: '#6426A9',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  loginSubtitle: {
+    fontSize: isTablet ? 18 : 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  loginInput: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e0d6ef',
+    color: '#6426A9',
+  },
+  loginButton: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#6426A9',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#6426A9',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  loginButtonDisabled: {
+    opacity: 0.6,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
   },
 });

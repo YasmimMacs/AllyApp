@@ -30,8 +30,8 @@ export default function ConfirmCode({ route, navigation }: Props) {
   async function handleConfirm() {
     try {
       await confirmSignUp({ username, confirmationCode: code });
-      alert("Account confirmed! Please login.");
-      navigation.replace("Main"); // Navigate to main app
+      alert("Account confirmed! Please login with your credentials.");
+      navigation.replace("Auth"); // Navigate to Auth (HomeScreen) where user can login
     } catch (e: any) {
       alert(e.message);
     }
@@ -39,17 +39,19 @@ export default function ConfirmCode({ route, navigation }: Props) {
 
   async function handleResendCode() {
     try {
-      // Temporarily disabled AWS Amplify functionality
-      // await resendSignUpCode({username});
-      alert("Code sent again!");
+      await resendSignUpCode({username});
+      alert("Verification code sent again! Check your email.");
     } catch (e: any) {
-      alert("Code sent again!");
+      alert("Failed to resend code: " + e.message);
     }
   }
 
   return (
     <View style={styles.wrapper}>
       <Text style={styles.title}>Enter the verification code</Text>
+      <Text style={styles.subtitle}>
+        We sent a 6-digit code to {username}
+      </Text>
 
       <TextInput
         style={styles.input}
@@ -82,6 +84,12 @@ const styles = StyleSheet.create({
     fontSize: scale(20),
     fontWeight: "600",
     color: COLORS.primary,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  subtitle: {
+    fontSize: scale(14),
+    color: COLORS.textGrey,
     textAlign: "center",
     marginBottom: 24,
   },
