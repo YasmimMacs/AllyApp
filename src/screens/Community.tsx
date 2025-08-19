@@ -9,11 +9,19 @@ import {
   Dimensions,
   Platform,
   StatusBar,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/RootNavigator";
+import StoryTray from "../components/StoryTray";
+import StoryViewerModal from "../components/StoryViewerModal";
+import FAB from "../components/FAB";
+import CreatePostModal, { NewPost, PostType } from "../components/CreatePostModal";
+import { useStories } from "../hooks/useStories";
+import { Story } from "../storage/stories";
+import { ActionSheetIOS } from "react-native";
 
 type CommunityScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -47,6 +55,16 @@ interface Post {
 export default function CommunityScreen() {
   const navigation = useNavigation<CommunityScreenNavigationProp>();
   const [selectedFilter, setSelectedFilter] = useState("Stories");
+  
+  // Stories functionality
+  const { stories, loading, createFromCamera, createFromLibrary } = useStories();
+  const [storyViewerOpen, setStoryViewerOpen] = useState(false);
+  const [currentStory, setCurrentStory] = useState<Story | null>(null);
+  
+  // Post creation functionality
+  const [modalType, setModalType] = useState<PostType | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [localPosts, setLocalPosts] = useState<Post[]>([]);
 
   const posts: Post[] = [
     {
@@ -82,6 +100,69 @@ export default function CommunityScreen() {
   ];
 
   const filters = ["Stories", "Tips", "Incidents"];
+
+  // Handle story viewer
+  const handleStoryOpen = (story: Story) => {
+    setCurrentStory(story);
+    setStoryViewerOpen(true);
+  };
+
+  const handleStoryClose = () => {
+    setStoryViewerOpen(false);
+    setCurrentStory(null);
+  };
+
+  // Handle post creation
+  const onCreatePost = (newPost: NewPost) => {
+    const convertedPost: Post = {
+      id: Number(newPost.id),
+      user: "You",
+      time: "Just now",
+      content: newPost.title ? `${newPost.title}\n\n${newPost.text}` : newPost.text,
+      type: newPost.type === 'review' ? 'positive' : newPost.type === 'tip' ? 'positive' : 'warning',
+      likes: 0,
+      comments: 0,
+    };
+    setLocalPosts(prev => [convertedPost, ...prev]);
+    // TODO: if you have backend/API, call it here
+  };
+
+  const openActions = () => {
+    const onPick = (i: number) => {
+      if (i === 1) { setModalType('review'); setModalOpen(true); }
+      else if (i === 2) { setModalType('tip'); setModalOpen(true); }
+      else if (i === 3) { setModalType('incident'); setModalOpen(true); }
+      else if (i === 4) { // Share a Story
+        if (Platform.OS === 'ios') {
+          ActionSheetIOS.showActionSheetWithOptions(
+            { options: ['Cancel','Take Photo','Choose from Library'], cancelButtonIndex: 0 },
+            (j) => { if (j===1) createFromCamera(); else if (j===2) createFromLibrary(); }
+          );
+        } else {
+          Alert.alert('Share a story', 'Choose', [
+            { text:'Camera', onPress: createFromCamera },
+            { text:'Gallery', onPress: createFromLibrary },
+            { text:'Cancel', style:'cancel' },
+          ]);
+        }
+      }
+    };
+    
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['Cancel','Write a Review','Share a Tip','Report Incident','Share a Story'], cancelButtonIndex: 0 },
+        onPick
+      );
+    } else {
+      Alert.alert('Create', 'Choose what to share', [
+        { text:'Review', onPress: () => onPick(1) },
+        { text:'Tip', onPress: () => onPick(2) },
+        { text:'Incident', onPress: () => onPick(3) },
+        { text:'Story', onPress: () => onPick(4) },
+        { text:'Cancel', style:'cancel' },
+      ]);
+    }
+  };
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -148,12 +229,15 @@ export default function CommunityScreen() {
         </ScrollView>
       </View>
 
+      {/* Story Tray */}
+      <StoryTray stories={stories} onOpen={handleStoryOpen} />
+
       {/* Posts */}
       <ScrollView
         style={styles.postsContainer}
         showsVerticalScrollIndicator={false}
       >
-        {posts.map((post) => (
+        {[...localPosts, ...posts].map((post) => (
           <View key={post.id} style={styles.postCard}>
             <View style={styles.postHeader}>
               <View style={styles.userInfo}>
@@ -204,11 +288,23 @@ export default function CommunityScreen() {
         ))}
       </ScrollView>
 
-      {/* Share Button */}
-      <TouchableOpacity style={styles.shareButton}>
-        <Ionicons name="camera" size={24} color="#FFFFFF" />
-        <Text style={styles.shareButtonText}>Share Your Story</Text>
-      </TouchableOpacity>
+      {/* FAB */}
+      <FAB onPress={openActions} />
+
+      {/* Story Viewer Modal */}
+      <StoryViewerModal
+        visible={storyViewerOpen}
+        story={currentStory}
+        onClose={handleStoryClose}
+      />
+
+      {/* Create Post Modal */}
+      <CreatePostModal
+        visible={modalOpen}
+        type={modalType ?? 'tip'}
+        onClose={() => setModalOpen(false)}
+        onSubmit={onCreatePost}
+      />
     </SafeAreaView>
   );
 }

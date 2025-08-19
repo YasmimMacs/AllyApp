@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import MapView, { PROVIDER_GOOGLE, Marker, Callout, Region } from "react-native-maps";
 import {
   View,
@@ -14,6 +14,7 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -30,6 +31,7 @@ import { useLocationPermission } from "../hooks/useLocationPermission";
 import { LocationPermissionBanner } from "../components/LocationPermissionBanner";
 import { useReverseGeocode } from "../hooks/useReverseGeocode";
 import { Toast } from "../components/Toast";
+import * as Location from 'expo-location';
 
 type MapScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -90,6 +92,16 @@ export default function MapScreen() {
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   });
+  
+  // Search functionality state
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<Array<{
+    id: string;
+    name: string;
+    address: string;
+    coordinates: { latitude: number; longitude: number };
+  }>>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   
   // Toast state for showing geocoding errors
   const [showToast, setShowToast] = useState(false);
@@ -367,6 +379,130 @@ export default function MapScreen() {
     };
   };
 
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    (() => {
+      let timeoutId: NodeJS.Timeout;
+      return (query: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          handleSearch(query);
+        }, 500); // 500ms delay
+      };
+    })(),
+    []
+  );
+
+  // Search functionality
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      // Use reverse geocoding to search for locations
+      const results = await searchLocations(query);
+      setSearchResults(results);
+      setShowSearchResults(true);
+    } catch (error) {
+      console.error('Search error:', error);
+      setToastMessage('Search failed. Please try again.');
+      setToastType('error');
+      setShowToast(true);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const searchLocations = async (query: string) => {
+    try {
+      // Use expo-location's geocoding to search for locations
+      const results = await Location.geocodeAsync(query);
+      
+      if (results.length > 0) {
+        // Get address details for each result
+        const detailedResults = await Promise.all(
+          results.slice(0, 5).map(async (result, index) => {
+            try {
+              const addresses = await Location.reverseGeocodeAsync({
+                latitude: result.latitude,
+                longitude: result.longitude,
+              });
+              
+              const address = addresses[0];
+              const addressString = [
+                address?.street,
+                address?.city,
+                address?.region,
+                address?.country
+              ].filter(Boolean).join(', ');
+
+              return {
+                id: `search-${index}`,
+                name: query,
+                address: addressString || 'Unknown address',
+                coordinates: {
+                  latitude: result.latitude,
+                  longitude: result.longitude,
+                },
+              };
+            } catch (error) {
+              return {
+                id: `search-${index}`,
+                name: query,
+                address: 'Unknown address',
+                coordinates: {
+                  latitude: result.latitude,
+                  longitude: result.longitude,
+                },
+              };
+              }
+            }
+          )
+        );
+        
+        return detailedResults;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      throw error;
+    }
+  };
+
+  const handleSearchResultSelect = (result: any) => {
+    // Move map to selected location
+    const newRegion: Region = {
+      latitude: result.coordinates.latitude,
+      longitude: result.coordinates.longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    };
+    
+    setMapRegion(newRegion);
+    mapRef.current?.animateToRegion(newRegion, 1000);
+    
+    // Clear search
+    setSearchQuery('');
+    setShowSearchResults(false);
+    setSearchResults([]);
+    
+    // Show success toast
+    setToastMessage(`Navigated to ${result.name}`);
+    setToastType('success');
+    setShowToast(true);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowSearchResults(false);
+  };
+
   const safetyStatus = getCurrentSafetyStatus();
 
   const filteredSafetyZones = safetyZones.filter(zone => {
@@ -441,7 +577,7 @@ export default function MapScreen() {
             <Ionicons
               name="search"
               size={20}
-              color="#6426A9"
+              color="#9CA3AF"
               style={styles.searchIcon}
             />
             <TextInput
@@ -449,9 +585,56 @@ export default function MapScreen() {
               placeholder="Search location or address..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
-              onChangeText={setSearchQuery}
+              onChangeText={(text) => {
+                setSearchQuery(text);
+                if (text.trim()) {
+                  debouncedSearch(text);
+                } else {
+                  clearSearch();
+                }
+              }}
+              onSubmitEditing={() => handleSearch(searchQuery)}
+              returnKeyType="search"
             />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+            )}
           </View>
+          
+          {/* Search Results */}
+          {showSearchResults && searchResults.length > 0 && (
+            <View style={styles.searchResultsContainer}>
+              <FlatList
+                data={searchResults}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.searchResultItem}
+                    onPress={() => handleSearchResultSelect(item)}
+                  >
+                    <Ionicons name="location" size={16} color="#6426A9" />
+                    <View style={styles.searchResultContent}>
+                      <Text style={styles.searchResultName}>{item.name}</Text>
+                      <Text style={styles.searchResultAddress}>{item.address}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                  </TouchableOpacity>
+                )}
+                style={styles.searchResultsList}
+                showsVerticalScrollIndicator={false}
+              />
+            </View>
+          )}
+          
+          {/* Loading indicator for search */}
+          {isSearching && (
+            <View style={styles.searchLoadingContainer}>
+              <ActivityIndicator size="small" color="#6426A9" />
+              <Text style={styles.searchLoadingText}>Searching...</Text>
+            </View>
+          )}
         </View>
 
         {/* Filter Tabs */}
@@ -751,6 +934,7 @@ const styles = StyleSheet.create({
   searchInputContainer: {
     position: "relative",
   },
+
   searchIcon: {
     position: "absolute",
     left: 12,
@@ -766,6 +950,67 @@ const styles = StyleSheet.create({
     color: "#374151",
     borderWidth: 1,
     borderColor: "#E5E7EB",
+  },
+  clearButton: {
+    padding: 4,
+    marginRight: 8,
+  },
+  searchButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  searchResultsContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+    maxHeight: 300,
+  },
+  searchResultsList: {
+    maxHeight: 300,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  searchResultContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  searchResultName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  searchResultAddress: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  searchLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  searchLoadingText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginLeft: 8,
   },
   filterContainer: {
     marginBottom: 16,
