@@ -231,11 +231,7 @@ export default function HomeScreen() {
       alert('Please enter both email and password');
       return;
     }
-    if (__DEV__) {
-      alert('DEV: entrando sem autenticação');
-      navigation.navigate('Main'); // ou sua tela pós-login
-      return;
-    }
+
 
     try {
       const out = await signIn({ username, password });
@@ -274,27 +270,85 @@ export default function HomeScreen() {
         default:
           alert(`Login needs extra step: ${step || 'unknown'}`);
       }
-    } catch (err: any) {
-      // Mostra tudo que der pra diagnosticar "unknown"
-      console.log('Login error raw:', err);
-      console.log('Login error keys:', Object.keys(err || {}));
-      try { console.log('Login error JSON:', JSON.stringify(err, null, 2)); } catch {}
-  
-      
-      const code = err?.code || err?.name;
-      if (code === 'UserNotConfirmedException') {
-        alert('Please confirm your account via the email we sent.');
-        // navigation.navigate('ConfirmCode', { username });
-      } else if (code === 'NotAuthorizedException') {
-        alert('Invalid email or password.');
-      } else if (code === 'UserNotFoundException') {
-        alert('Account not found. Create a new account.');
-      } else if (code === 'InvalidParameterException') {
-        alert('Invalid email format.');
-      } else {
-        alert(`Login failed: ${err?.message || String(err)} (Code: ${code || 'unknown'})`);
-      }
-    }
+         } catch (err: any) {
+       // Mostra tudo que der pra diagnosticar "unknown"
+       console.log('Login error raw:', err);
+       console.log('Login error keys:', Object.keys(err || {}));
+       try { console.log('Login error JSON:', JSON.stringify(err, null, 2)); } catch {}
+   
+       
+       const code = err?.code || err?.name;
+       const message = err?.message || String(err);
+       
+       // Check for various ways AWS Cognito might indicate a user doesn't exist
+       if (code === 'UserNotConfirmedException') {
+         alert('Please confirm your account via the email we sent.');
+         // navigation.navigate('ConfirmCode', { username });
+       } else if (code === 'NotAuthorizedException') {
+         // This often means user doesn't exist or wrong password
+         // Check if the error message suggests user doesn't exist
+         if (message.toLowerCase().includes('user does not exist') || 
+             message.toLowerCase().includes('user not found') ||
+             message.toLowerCase().includes('no user found')) {
+           Alert.alert(
+             'Account Not Found',
+             'You do not have an account. Please create one.',
+             [
+               {
+                 text: 'Cancel',
+                 style: 'cancel'
+               },
+               {
+                 text: 'Create Account',
+                 onPress: () => navigation.navigate('SignUp')
+               }
+             ]
+           );
+         } else {
+           alert('Invalid email or password.');
+         }
+       } else if (code === 'UserNotFoundException') {
+         Alert.alert(
+           'Account Not Found',
+           'You do not have an account. Please create one.',
+           [
+             {
+               text: 'Cancel',
+               style: 'cancel'
+             },
+             {
+               text: 'Create Account',
+               onPress: () => navigation.navigate('SignUp')
+             }
+           ]
+         );
+       } else if (code === 'InvalidParameterException') {
+         alert('Invalid email format.');
+       } else {
+         // Check if the error message contains keywords suggesting user doesn't exist
+         if (message.toLowerCase().includes('user does not exist') || 
+             message.toLowerCase().includes('user not found') ||
+             message.toLowerCase().includes('no user found') ||
+             message.toLowerCase().includes('account not found')) {
+           Alert.alert(
+             'Account Not Found',
+             'You do not have an account. Please create one.',
+             [
+               {
+                 text: 'Cancel',
+                 style: 'cancel'
+               },
+               {
+                 text: 'Create Account',
+                 onPress: () => navigation.navigate('SignUp')
+               }
+             ]
+           );
+         } else {
+           alert(`Login failed: ${message} (Code: ${code || 'unknown'})`);
+         }
+       }
+     }
   };
 
   return (
@@ -360,7 +414,9 @@ export default function HomeScreen() {
               Log In
             </Text>
           </Pressable>
-          <Text style={styles.forgotPassword}>Forgotten password?</Text>
+                     <Pressable onPress={() => navigation.navigate('PasswordRecover')}>
+             <Text style={styles.forgotPassword}>Forgotten password?</Text>
+           </Pressable>
         </View>
 
         {/* Divider */}

@@ -15,6 +15,7 @@ import CommunityScreen from "../screens/Community";
 import MapScreen from "../screens/Map";
 import SettingsScreen from "../screens/Settings";
 import ItemsScreen from '../screens/ItemsScreen';
+import PasswordRecover from "../screens/PasswordRecover";
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -22,6 +23,7 @@ export type RootStackParamList = {
   SignUp: undefined;
   ConfirmCode: { username: string };
   Items: undefined;
+  PasswordRecover: undefined;
 };
 
 export type MainTabParamList = {
@@ -149,6 +151,15 @@ export default function RootNavigator() {
             component={ConfirmCode}
             options={{ 
               title: "Verify Code",
+              headerShown: true,
+            }}
+          />
+
+          <Stack.Screen
+            name="PasswordRecover"
+            component={PasswordRecover}
+            options={{ 
+              title: "Recover Password",
               headerShown: true,
             }}
           />
