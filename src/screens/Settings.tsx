@@ -1,25 +1,34 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Dimensions, 
-  Platform, 
-  StatusBar, 
-  SafeAreaView, 
-  ScrollView, 
-  Pressable, 
-  Modal, 
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  Platform,
+  StatusBar,
+  SafeAreaView,
+  ScrollView,
+  Pressable,
+  Modal,
   TouchableWithoutFeedback,
   Image,
   Alert,
   Switch,
+  Linking,
 } from 'react-native';
 import { startLocationSharing, stopLocationSharing } from '../features/LocationService';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { Ionicons } from '@expo/vector-icons';
+import { 
+  requestLocationPermission, 
+  getAndStoreCurrentLocation, 
+  loadLastKnownLocation, 
+  clearStoredLocation,
+  shareLocation 
+} from '../storage/location';
+import { useProfilePhoto } from '../hooks/useProfilePhoto';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const isTablet = screenWidth >= 768;
@@ -56,10 +65,25 @@ export function LocationSwitch() {
 export default function SettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [showLogout, setShowLogout] = useState(false);
-  const [locationSharing, setLocationSharing] = useState(true);
+  const [locationSharing, setLocationSharing] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [emergencyAlerts, setEmergencyAlerts] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const [lastKnownLocation, setLastKnownLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const { photoUri, loading, pickFromLibrary, takePhoto } = useProfilePhoto();
+
+  useEffect(() => {
+    loadStoredLocation();
+  }, []);
+
+  const loadStoredLocation = async () => {
+    try {
+      const location = await loadLastKnownLocation();
+      setLastKnownLocation(location);
+    } catch (error) {
+      console.error('Error loading stored location:', error);
+    }
+  };
 
   const handleLogout = () => {
     setShowLogout(false);
@@ -67,7 +91,15 @@ export default function SettingsScreen() {
   };
 
   const handleProfilePhoto = () => {
-    Alert.alert('Profile Photo', 'Upload new profile photo');
+    Alert.alert(
+      'Profile Photo',
+      'Choose how you want to add a profile photo',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Take Photo', onPress: takePhoto },
+        { text: 'Choose from Library', onPress: pickFromLibrary },
+      ]
+    );
   };
 
   const handleEmergencyContacts = () => {
@@ -80,6 +112,46 @@ export default function SettingsScreen() {
 
   const handleSafetyPreferences = () => {
     Alert.alert('Safety Preferences', 'Customize your safety settings');
+  };
+
+  const handleLocationSharingToggle = async (value: boolean) => {
+    try {
+      if (value) {
+        // Turn on location sharing
+        const location = await getAndStoreCurrentLocation();
+        if (location) {
+          setLocationSharing(true);
+          setLastKnownLocation(location);
+          Alert.alert('Success', 'Location sharing enabled. Your location has been stored.');
+        } else {
+          // Permission denied or location unavailable
+          setLocationSharing(false);
+        }
+      } else {
+        // Turn off location sharing
+        await clearStoredLocation();
+        setLocationSharing(false);
+        setLastKnownLocation(null);
+        Alert.alert('Location Sharing Disabled', 'Your location is no longer being shared or stored.');
+      }
+    } catch (error) {
+      console.error('Error toggling location sharing:', error);
+      Alert.alert('Error', 'Failed to update location sharing settings. Please try again.');
+    }
+  };
+
+  const handleShareLocation = async () => {
+    if (!lastKnownLocation) {
+      Alert.alert('No Location', 'Please enable location sharing first to share your location.');
+      return;
+    }
+
+    try {
+      await shareLocation(lastKnownLocation.lat, lastKnownLocation.lng);
+    } catch (error) {
+      console.error('Error sharing location:', error);
+      Alert.alert('Error', 'Failed to share location. Please try again.');
+    }
   };
 
   const handleHelpSupport = () => {
@@ -101,16 +173,34 @@ export default function SettingsScreen() {
           
           {/* Profile Section */}
           <View style={styles.section}>
-            
             <View style={styles.profileCard}>
-              <Pressable style={styles.profilePhotoContainer} onPress={handleProfilePhoto}>
-                <View style={styles.profilePhoto}>
-                  <Ionicons name="person" size={40} color="#6426A9" />
-                </View>
+              <Pressable 
+                style={styles.profilePhotoContainer} 
+                onPress={handleProfilePhoto}
+                disabled={loading}
+                testID="avatar-image"
+              >
+                {photoUri ? (
+                  <Image 
+                    source={{ uri: photoUri }} 
+                    style={styles.profilePhoto}
+                    testID="avatar-image"
+                  />
+                ) : (
+                  <View style={styles.profilePhoto}>
+                    <Ionicons name="person" size={40} color="#6426A9" />
+                  </View>
+                )}
                 <View style={styles.cameraIcon}>
-                  <Ionicons name="camera" size={16} color="#fff" />
+                  <Ionicons 
+                    name="camera" 
+                    size={16} 
+                    color="#fff" 
+                    testID="avatar-camera-button"
+                  />
                 </View>
               </Pressable>
+              
               <View style={styles.profileInfo}>
                 <Text style={styles.profileName}>Sarah Johnson</Text>
                 <Text style={styles.profileEmail}>sarah.johnson@email.com</Text>
@@ -135,11 +225,32 @@ export default function SettingsScreen() {
                 </View>
                 <Switch
                   value={locationSharing}
-                  onValueChange={setLocationSharing}
+                  onValueChange={handleLocationSharingToggle}
                   trackColor={{ false: '#E5E5E5', true: '#6426A9' }}
                   thumbColor={locationSharing ? '#fff' : '#f4f3f4'}
+                  testID="toggle-location-sharing"
                 />
               </View>
+
+              {/* Share Location Button */}
+              {locationSharing && lastKnownLocation && (
+                <View style={styles.settingItem}>
+                  <View style={styles.settingInfo}>
+                    <Ionicons name="share" size={24} color="#6426A9" />
+                    <View style={styles.settingText}>
+                      <Text style={styles.settingTitle}>Share My Location</Text>
+                      <Text style={styles.settingSubtitle}>Share your current location via maps</Text>
+                    </View>
+                  </View>
+                  <Pressable 
+                    style={styles.shareLocationButton}
+                    onPress={handleShareLocation}
+                    testID="btn-share-location"
+                  >
+                    <Text style={styles.shareLocationButtonText}>Share</Text>
+                  </Pressable>
+                </View>
+              )}
 
               <View style={styles.settingItem}>
                 <View style={styles.settingInfo}>
@@ -306,9 +417,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
     borderWidth: 3,
     borderColor: '#6426A9',
   },
@@ -500,5 +608,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '500',
     textAlign: 'center',
+  },
+  shareLocationButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#6426A9',
+  },
+  shareLocationButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
