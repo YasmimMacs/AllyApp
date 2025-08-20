@@ -1,7 +1,7 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { TouchableOpacity, Text, StyleSheet, Alert, ActivityIndicator, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { signInWithRedirect } from 'aws-amplify/auth';
+import { signInWithRedirect, getCurrentUser } from 'aws-amplify/auth';
 import { useAuth } from '../contexts/AuthContext';
 
 interface GoogleSignInProps {
@@ -10,31 +10,69 @@ interface GoogleSignInProps {
 }
 
 export const GoogleSignIn: React.FC<GoogleSignInProps> = ({ onSuccess, onError }) => {
-  const { signIn } = useAuth();
+  const { signIn: authSignIn } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
+    setIsLoading(true);
     try {
-      // For now, this will use the federated sign-in with Google
-      // You'll need to configure Google OAuth in your AWS Cognito User Pool
-      await signInWithRedirect({ provider: 'Google' });
+      // For React Native with app scheme, we need to handle the OAuth flow properly
+      // The app scheme "allyapp://" will be used for redirects
+      await signInWithRedirect({ 
+        provider: 'Google',
+        customState: 'allyapp' // Add custom state for tracking
+      });
+      
+      // Show success message
+      Alert.alert(
+        'Google Sign-In', 
+        'Google Sign-In initiated successfully! You will be redirected back to the app.',
+        [{ text: 'OK' }]
+      );
       
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
       console.error('Google sign-in error:', error);
-      Alert.alert('Sign In Error', 'Failed to sign in with Google. Please try again.');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to sign in with Google. Please try again.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('not configured')) {
+          errorMessage = 'Google Sign-In is not configured yet. Please contact support.';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        } else if (error.message.includes('scheme')) {
+          errorMessage = 'App scheme configuration issue. Please restart the app.';
+        }
+      }
+      
+      Alert.alert('Sign In Error', errorMessage, [{ text: 'OK' }]);
       
       if (onError) {
         onError(error as Error);
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
-      <Ionicons name="logo-google" size={24} color="#FFFFFF" />
-      <Text style={styles.googleButtonText}>Continue with Google</Text>
+    <TouchableOpacity 
+      style={[styles.googleButton, isLoading && styles.disabledButton]} 
+      onPress={handleGoogleSignIn}
+      disabled={isLoading}
+    >
+      {isLoading ? (
+        <ActivityIndicator color="#FFFFFF" size="small" />
+      ) : (
+        <Ionicons name="logo-google" size={24} color="#FFFFFF" />
+      )}
+      <Text style={styles.googleButtonText}>
+        {isLoading ? 'Signing in...' : 'Continue with Google'}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -49,6 +87,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginVertical: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
   googleButtonText: {
     color: '#FFFFFF',
