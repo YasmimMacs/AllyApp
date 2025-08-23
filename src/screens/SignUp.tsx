@@ -438,8 +438,6 @@ export default function SignUp() {
               </Text>
             </Pressable>
             
-            <Text style={styles.orText}>or</Text>
-            
             <Pressable
               onPress={() => navigation.navigate("Auth")}
               style={({ pressed }) => [
@@ -556,7 +554,7 @@ const styles = StyleSheet.create({
   },
   footbar: {
     width: "100%",
-    backgroundColor: "#6426A9",
+    backgroundColor: "transparent",
     paddingVertical: 18,
     alignItems: "center",
     justifyContent: "center",
@@ -566,7 +564,7 @@ const styles = StyleSheet.create({
     marginTop: isTablet ? 48 : 32,
   },
   footbarText: {
-    color: "#fff",
+    color: "#6426A9",
     fontSize: isTablet ? 15 : 12,
     fontWeight: "500",
     letterSpacing: 1,
@@ -604,20 +602,21 @@ const styles = StyleSheet.create({
     color: "#6426A9",
   },
   signupButton: {
-    backgroundColor: "#002a2d",
+    backgroundColor: "#6426A9",
     borderRadius: 8,
     paddingVertical: isTablet ? 12 : 8,
-    paddingHorizontal: isTablet ? 40 : 32, // increased horizontal padding
+    paddingHorizontal: isTablet ? 60 : 48,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
-    marginBottom: 8, // reduced from 16 to 8 for closer spacing to "or"
-    shadowColor: "#002a2d",
+    marginBottom: 8,
+    shadowColor: "#6426A9",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.18,
     shadowRadius: 4,
     elevation: 2,
     alignSelf: "center",
+    minWidth: 280,
   },
   signupButtonText: {
     color: "#fff",
@@ -687,23 +686,26 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   loginButton: {
-    backgroundColor: "#6426A9",
+    backgroundColor: "#fff",
     borderRadius: 8,
     paddingVertical: isTablet ? 12 : 8,
-    paddingHorizontal: isTablet ? 40 : 32,
+    paddingHorizontal: isTablet ? 60 : 48,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8, // reduced from 24 to 8 for closer spacing to "or"
+    marginTop: 8,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#6426A9",
     shadowColor: "#6426A9",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.18,
     shadowRadius: 4,
     elevation: 2,
     alignSelf: "center",
+    minWidth: 280,
   },
   loginButtonText: {
-    color: "#fff",
+    color: "#6426A9",
     fontWeight: "600",
     fontSize: isTablet ? 16 : 13,
     letterSpacing: 1,
@@ -715,12 +717,5 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginBottom: 16,
     fontWeight: "500",
-  },
-  orText: {
-    color: "#6426A9",
-    fontSize: isTablet ? 16 : 14,
-    textAlign: "center",
-    marginVertical: 8,
-    fontWeight: "600",
   },
 });

@@ -48,27 +48,33 @@ export default function ConfirmCode({ route, navigation }: Props) {
 
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.title}>Enter the verification code</Text>
-      <Text style={styles.subtitle}>
-        We sent a 6-digit code to {username}
-      </Text>
+      <View style={styles.formContainer}>
+        <Text style={styles.title}>Enter the verification code</Text>
+        <Text style={styles.subtitle}>
+          We sent a 6-digit code to {username}
+        </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="6‑digit code"
-        placeholderTextColor={COLORS.textGrey}
-        keyboardType="number-pad"
-        value={code}
-        onChangeText={setCode}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="6‑digit code"
+          placeholderTextColor={COLORS.textGrey}
+          keyboardType="number-pad"
+          value={code}
+          onChangeText={setCode}
+        />
 
-      <TouchableOpacity style={styles.button} onPress={handleConfirm}>
-        <Text style={styles.buttonText}>Confirm Account</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleConfirm}>
+          <Text style={styles.buttonText}>Confirm Account</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.resend} onPress={handleResendCode}>
-        <Text style={styles.resendTxt}>Resend code</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.resend} onPress={handleResendCode}>
+          <Text style={styles.resendTxt}>Resend code</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <View style={styles.footbar}>
+        <Text style={styles.footbarText}>© 2025 Ally</Text>
+      </View>
     </View>
   );
 }
@@ -76,9 +82,22 @@ export default function ConfirmCode({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: COLORS.bgLight,
+    backgroundColor: "#fae7f7",
     justifyContent: "center",
     padding: 24,
+  },
+  formContainer: {
+    width: "100%",
+    maxWidth: 400,
+    alignSelf: "center",
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 12,
+    padding: 24,
+    shadowColor: "#6426A9",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1,
   },
   title: {
     fontSize: scale(20),
@@ -89,32 +108,67 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: scale(14),
-    color: COLORS.textGrey,
+    color: "#999",
     textAlign: "center",
     marginBottom: 24,
   },
   input: {
     borderWidth: 1,
-    borderColor: COLORS.textGrey,
+    borderColor: "#e0d6ef",
     borderRadius: 8,
     padding: 14,
     fontSize: scale(16),
     backgroundColor: "#fff",
     marginBottom: 24,
+    color: "#6426A9",
   },
   button: {
     backgroundColor: COLORS.primary,
     padding: 14,
+    paddingHorizontal: 48,
     borderRadius: 8,
     alignItems: "center",
+    minWidth: 280,
+    alignSelf: "center",
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 2,
   },
   buttonText: { color: "#fff", fontSize: scale(16), fontWeight: "600" },
   resend: {
     marginTop: 16,
     alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 48,
+    minWidth: 280,
+    alignSelf: "center",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 2,
   },
   resendTxt: {
-    color: "#6426A9",
+    color: COLORS.primary,
     fontWeight: "600",
+    fontSize: scale(16),
+  },
+  footbar: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  footbarText: {
+    fontSize: scale(12),
+    color: COLORS.textGrey,
   },
 });

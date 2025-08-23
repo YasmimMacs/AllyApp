@@ -429,29 +429,6 @@ export default function HomeScreen() {
            </Pressable>
         </View>
 
-        {/* Divider */}
-        <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        {/* Google Sign-In Button */}
-        <Pressable
-          onPress={handleGoogleSignIn}
-          disabled={isGoogleSigningIn}
-          style={({ pressed }) => [
-            styles.googleSignInButton,
-            pressed && { opacity: 0.9 },
-            isGoogleSigningIn && { opacity: 0.6 },
-          ]}
-        >
-          <Ionicons name="logo-google" size={20} color="#4285F4" />
-          <Text style={styles.googleSignInText}>
-            {isGoogleSigningIn ? 'Signing In...' : 'Continue with Google'}
-          </Text>
-        </Pressable>
-
         <View style={styles.buttonContainer}>
           <Pressable
             onHoverIn={() => setIsCreateAccountButtonHovered(true)}
@@ -590,24 +567,26 @@ const styles = StyleSheet.create({
     marginTop: isTablet ? 32 : 24, // added margin to move subtitle down
   },
   buttonContainer: {
-    width: isTablet ? 300 : "100%",
+    width: "100%",
     maxWidth: 400,
-    paddingHorizontal: isSmallDevice ? 20 : 0,
+    alignSelf: "center",
   },
   animatedButton: {
     borderRadius: 8,
     overflow: "hidden",
   },
   customButton: {
-    backgroundColor: "#002a2d",
+    backgroundColor: "#fff",
     borderRadius: 8,
     paddingVertical: isTablet ? 12 : 8,
     paddingHorizontal: isTablet ? 24 : 16,
     alignItems: "center",
     justifyContent: "center",
     marginTop: isTablet ? 36 : 28,
-    marginBottom: isTablet ? 64 : 48, // increased margin below for more separation from footbar
-    shadowColor: "#002a2d",
+    marginBottom: isTablet ? 64 : 48,
+    borderWidth: 1,
+    borderColor: "#6426A9",
+    shadowColor: "#6426A9",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.18,
     shadowRadius: 4,
@@ -615,7 +594,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   customButtonText: {
-    color: "#fff",
+    color: "#6426A9",
     fontWeight: "bold",
     fontSize: isTablet ? 16 : 13,
     letterSpacing: 1,
@@ -651,14 +630,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#6426A9",
     borderRadius: 8,
     paddingVertical: isTablet ? 14 : 10,
+    paddingHorizontal: isTablet ? 60 : 48,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 4,
+    marginBottom: 16,
     shadowColor: "#6426A9",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.18,
     shadowRadius: 4,
-    elevation: 1,
+    elevation: 2,
+    alignSelf: "center",
+    minWidth: 280,
   },
   loginButtonText: {
     color: "#fff",
@@ -677,81 +660,42 @@ const styles = StyleSheet.create({
   },
   footbar: {
     width: "100%",
-    backgroundColor: "#6426A9",
+    backgroundColor: "transparent",
     paddingVertical: 18,
     alignItems: "center",
     justifyContent: "center",
     position: "absolute",
     bottom: 0,
     left: 0,
-    marginTop: isTablet ? 36 : 24, // added top margin
+    marginTop: isTablet ? 36 : 24,
   },
   footbarText: {
-    color: "#fff",
+    color: "#6426A9",
     fontSize: isTablet ? 15 : 12,
     fontWeight: "500",
     letterSpacing: 1,
   },
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: isTablet ? 32 : 24,
-    width: "100%",
-    maxWidth: 400,
-    alignSelf: "center",
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#ccc",
-  },
-  dividerText: {
-    marginHorizontal: 10,
-    color: "#666",
-    fontSize: isTablet ? 16 : 13,
-  },
-  googleSignInButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+  createAccountButton: {
     backgroundColor: "#fff",
     borderRadius: 8,
     paddingVertical: isTablet ? 12 : 8,
-    paddingHorizontal: isTablet ? 24 : 16,
-    marginTop: isTablet ? 36 : 28,
-    marginBottom: isTablet ? 64 : 48,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-  },
-  googleSignInText: {
-    marginLeft: 10,
-    color: "#333",
-    fontSize: isTablet ? 16 : 13,
-    fontWeight: "bold",
-  },
-  createAccountButton: {
-    backgroundColor: "#002a2d",
-    borderRadius: 8,
-    paddingVertical: isTablet ? 12 : 8,
-    paddingHorizontal: isTablet ? 24 : 16,
+    paddingHorizontal: isTablet ? 60 : 48,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: isTablet ? 36 : 28,
-    marginBottom: isTablet ? 64 : 48, // increased margin below for more separation from footbar
-    shadowColor: "#002a2d",
+    marginTop: 16,
+    marginBottom: isTablet ? 64 : 48,
+    borderWidth: 1,
+    borderColor: "#6426A9",
+    shadowColor: "#6426A9",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.18,
     shadowRadius: 4,
     elevation: 2,
     alignSelf: "center",
+    minWidth: 280,
   },
   createAccountButtonText: {
-    color: "#fff",
+    color: "#6426A9",
     fontWeight: "bold",
     fontSize: isTablet ? 16 : 13,
     letterSpacing: 1,
