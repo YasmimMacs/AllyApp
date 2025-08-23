@@ -19,10 +19,42 @@
         "ally845d9ca4": {
           "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
           "s3Key": "amplify-builds/ally845d9ca4-2f745830574e2b6c656f-build.zip"
+        },
+        "safetyHandler": {
+          "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
+          "s3Key": "amplify-builds/safetyHandler-484c5447536f4c4d7a69-build.zip",
+          "cautionThreshold": "4.0",
+          "safeThreshold": "7.5",
+          "tableCountryRisk": "CountryRisk-dev",
+          "tableLiveIncidents": "LiveIncidents-dev",
+          "tableCommunityReports": "CommunityReports-dev",
+          "rfsFeedUrl": "https://www.rfs.nsw.gov.au/feeds/majorIncidents.xml"
+        },
+        "createReports": {
+          "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
+          "s3Key": "amplify-builds/createReports-336648746f7567565267-build.zip"
+        },
+        "listReports": {
+          "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
+          "s3Key": "amplify-builds/listReports-57654c46743259787763-build.zip"
+        },
+        "seedCountryRisk": {
+          "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
+          "s3Key": "amplify-builds/seedCountryRisk-365a654b347757652b5a-build.zip"
+        },
+        "ingestNSWRFS": {
+          "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
+          "s3Key": "amplify-builds/ingestNSWRFS-516d504d6f50627a307a-build.zip"
         }
       },
       "api": {
         "allyapi": {}
+      },
+      "storage": {
+        "Safety2025": {},
+        "dynamoc6b731c4": {},
+        "LiveIncidents": {},
+        "CommunityReports": {}
       }
     }
   }

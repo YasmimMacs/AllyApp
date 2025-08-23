@@ -1,0 +1,14 @@
+{
+  "resourceName": "Safety2025",
+  "policyUUID": "00a8a36e",
+  "bucketName": "allyf7b7a97ff61e4324b8d2c5230ea83d34",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "triggerFunction": "NONE",
+  "groupAccess": {}
+}

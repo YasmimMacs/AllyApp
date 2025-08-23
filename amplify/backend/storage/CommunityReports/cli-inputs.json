@@ -1,0 +1,10 @@
+{
+  "resourceName": "CommunityReports",
+  "tableName": "CommunityReports",
+  "partitionKey": {
+    "fieldName": "ip",
+    "fieldType": "string"
+  },
+  "gsi": [],
+  "triggerFunctions": []
+}

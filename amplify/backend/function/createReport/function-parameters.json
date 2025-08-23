@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "storage": {
+      "CommunityReports": [
+        "create"
+      ]
+    }
+  },
+  "lambdaLayers": []
+}

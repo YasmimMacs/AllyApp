@@ -7,6 +7,27 @@
       "permissions": {
         "setting": "open"
       }
+    },
+    "/safety": {
+      "name": "/safety",
+      "lambdaFunction": "safetyHandler",
+      "permissions": {
+        "setting": "open"
+      }
+    },
+    "/reports": {
+      "name": "/reports",
+      "lambdaFunction": "createReports",
+      "permissions": {
+        "setting": "open"
+      }
+    },
+    "/list-reports": {
+      "name": "/list-reports",
+      "lambdaFunction": "listReports",
+      "permissions": {
+        "setting": "open"
+      }
     }
   }
 }

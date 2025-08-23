@@ -22,6 +22,7 @@ import { useNavigation } from "@react-navigation/native";
 import { signIn, resendSignUpCode, fetchAuthSession, getCurrentUser, signInWithRedirect, fetchUserAttributes } from "aws-amplify/auth";
 import { Ionicons } from "@expo/vector-icons";
 import oauthHandler from "../utils/oauthHandler";
+import { Hub } from 'aws-amplify/utils';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -225,6 +226,15 @@ export default function HomeScreen() {
   };
 
   const handleLogin = async () => {
+    if (__DEV__) {
+      alert('DEV: Loading');
+      // Inform AuthContext that we are "signed in" for development
+      Hub.dispatch('auth', { event: 'signedIn', data: { username: 'dev-user' } });
+      // Give the navigator a moment to include the Main route
+      setTimeout(() => navigation.navigate('Main'), 50);
+      return;
+    }
+
     const username = email.trim().toLowerCase();
   
     if (!username || !password) {

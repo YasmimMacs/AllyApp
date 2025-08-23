@@ -1,0 +1,10 @@
+{
+  "resourceName": "dynamoc6b731c4",
+  "tableName": "CountryRisk",
+  "partitionKey": {
+    "fieldName": "CountryCOde",
+    "fieldType": "string"
+  },
+  "gsi": [],
+  "triggerFunctions": []
+}
