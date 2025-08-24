@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Platform,
 } from "react-native";
 
 
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
   },
   footbar: {
     position: 'absolute',
-    bottom: 20,
+    bottom: Platform.OS === 'android' ? 40 : 20,
     left: 0,
     right: 0,
     alignItems: 'center',

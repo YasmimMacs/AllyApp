@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     position: "absolute",
-    bottom: 0,
+    bottom: Platform.OS === 'android' ? 20 : 0,
     left: 0,
     marginTop: isTablet ? 48 : 32,
   },

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, View, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 type Props = { onPress: () => void; };
@@ -14,7 +14,7 @@ export default function FAB({ onPress }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { position:'absolute', right:16, bottom:24 },
+  container: { position:'absolute', right:16, bottom: Platform.OS === 'android' ? 114 : 109 },
   btn: { 
     width:56, 
     height:56, 
