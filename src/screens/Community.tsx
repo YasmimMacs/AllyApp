@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -18,8 +18,13 @@ import { RootStackParamList } from "../navigation/RootNavigator";
 import StoryTray from "../components/StoryTray";
 import StoryViewerModal from "../components/StoryViewerModal";
 import FAB from "../components/FAB";
-import CreatePostModal, { NewPost, PostType } from "../components/CreatePostModal";
+import CreatePostModal, {
+  NewPost,
+  PostType,
+} from "../components/CreatePostModal";
+import CommentModal from "../components/CommentModal";
 import { useStories } from "../hooks/useStories";
+import { useCommentsAndLikes } from "../hooks/useCommentsAndLikes";
 import { Story } from "../storage/stories";
 import { ActionSheetIOS } from "react-native";
 
@@ -55,12 +60,13 @@ interface Post {
 export default function CommunityScreen() {
   const navigation = useNavigation<CommunityScreenNavigationProp>();
   const [selectedFilter, setSelectedFilter] = useState("Stories");
-  
+
   // Stories functionality
-  const { stories, loading, createFromCamera, createFromLibrary } = useStories();
+  const { stories, loading, createFromCamera, createFromLibrary } =
+    useStories();
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
-  
+
   // Post creation functionality
   const [modalType, setModalType] = useState<PostType | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -99,6 +105,24 @@ export default function CommunityScreen() {
     },
   ];
 
+  // Comment functionality
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<number | null>(null);
+
+  // Get all post IDs for the hook
+  const allPosts = [...posts, ...localPosts];
+  const postIds = useMemo(() => allPosts.map((post) => post.id), [allPosts]);
+
+  // Comments and likes hook
+  const {
+    postLikes,
+    commentCounts,
+    likeCounts,
+    toggleLike,
+    addNewPost,
+    refreshCommentCount,
+  } = useCommentsAndLikes({ postIds });
+
   const filters = ["Stories", "Tips", "Incidents"];
 
   // Handle story viewer
@@ -118,48 +142,119 @@ export default function CommunityScreen() {
       id: Number(newPost.id),
       user: "You",
       time: "Just now",
-      content: newPost.title ? `${newPost.title}\n\n${newPost.text}` : newPost.text,
-      type: newPost.type === 'review' ? 'positive' : newPost.type === 'tip' ? 'positive' : 'warning',
+      content: newPost.title
+        ? `${newPost.title}\n\n${newPost.text}`
+        : newPost.text,
+      type:
+        newPost.type === "review"
+          ? "positive"
+          : newPost.type === "tip"
+          ? "positive"
+          : "warning",
       likes: 0,
       comments: 0,
     };
-    setLocalPosts(prev => [convertedPost, ...prev]);
+    setLocalPosts((prev) => [convertedPost, ...prev]);
+    addNewPost(convertedPost.id);
     // TODO: if you have backend/API, call it here
+  };
+
+  // Handle comment functionality
+  const handleToggleLike = async (postId: number) => {
+    await toggleLike(postId);
+  };
+
+  const handleOpenComments = (postId: number) => {
+    setSelectedPost(postId);
+    setCommentModalOpen(true);
+  };
+
+  const handleCloseComments = () => {
+    setCommentModalOpen(false);
+    if (selectedPost) {
+      refreshCommentCount(selectedPost);
+    }
+  };
+
+  const handleDeletePost = (postId: number) => {
+    Alert.alert("Delete Post", "Are you sure you want to delete this post?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => {
+          setLocalPosts((prev) => prev.filter((post) => post.id !== postId));
+        },
+      },
+    ]);
+  };
+
+  const handlePostOptions = (postId: number) => {
+    Alert.alert("Post Options", "Choose an action", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => handleDeletePost(postId),
+      },
+    ]);
   };
 
   const openActions = () => {
     const onPick = (i: number) => {
-      if (i === 1) { setModalType('review'); setModalOpen(true); }
-      else if (i === 2) { setModalType('tip'); setModalOpen(true); }
-      else if (i === 3) { setModalType('incident'); setModalOpen(true); }
-      else if (i === 4) { // Share a Story
-        if (Platform.OS === 'ios') {
+      if (i === 1) {
+        setModalType("review");
+        setModalOpen(true);
+      } else if (i === 2) {
+        setModalType("tip");
+        setModalOpen(true);
+      } else if (i === 3) {
+        setModalType("incident");
+        setModalOpen(true);
+      } else if (i === 4) {
+        // Share a Story
+        if (Platform.OS === "ios") {
           ActionSheetIOS.showActionSheetWithOptions(
-            { options: ['Cancel','Take Photo','Choose from Library'], cancelButtonIndex: 0 },
-            (j) => { if (j===1) createFromCamera(); else if (j===2) createFromLibrary(); }
+            {
+              options: ["Cancel", "Take Photo", "Choose from Library"],
+              cancelButtonIndex: 0,
+            },
+            (j) => {
+              if (j === 1) createFromCamera();
+              else if (j === 2) createFromLibrary();
+            }
           );
         } else {
-          Alert.alert('Share a story', 'Choose', [
-            { text:'Camera', onPress: createFromCamera },
-            { text:'Gallery', onPress: createFromLibrary },
-            { text:'Cancel', style:'cancel' },
+          Alert.alert("Share a story", "Choose", [
+            { text: "Camera", onPress: createFromCamera },
+            { text: "Gallery", onPress: createFromLibrary },
+            { text: "Cancel", style: "cancel" },
           ]);
         }
       }
     };
-    
-    if (Platform.OS === 'ios') {
+
+    if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
-        { options: ['Cancel','Write a Review','Share a Tip','Report Incident','Share a Story'], cancelButtonIndex: 0 },
+        {
+          options: [
+            "Cancel",
+            "Write a Review",
+            "Share a Tip",
+            "Report Incident",
+            "Share a Story",
+          ],
+          cancelButtonIndex: 0,
+        },
         onPick
       );
     } else {
-      Alert.alert('Create', 'Choose what to share', [
-        { text:'Review', onPress: () => onPick(1) },
-        { text:'Tip', onPress: () => onPick(2) },
-        { text:'Incident', onPress: () => onPick(3) },
-        { text:'Story', onPress: () => onPick(4) },
-        { text:'Cancel', style:'cancel' },
+      Alert.alert("Create", "Choose what to share", [
+        { text: "Review", onPress: () => onPick(1) },
+        { text: "Tip", onPress: () => onPick(2) },
+        { text: "Incident", onPress: () => onPick(3) },
+        { text: "Story", onPress: () => onPick(4) },
+        { text: "Cancel", style: "cancel" },
       ]);
     }
   };
@@ -249,7 +344,10 @@ export default function CommunityScreen() {
                   <Text style={styles.postTime}>{post.time}</Text>
                 </View>
               </View>
-              <TouchableOpacity style={styles.moreButton}>
+              <TouchableOpacity
+                style={styles.moreButton}
+                onPress={() => handlePostOptions(post.id)}
+              >
                 <Ionicons
                   name="ellipsis-horizontal"
                   size={20}
@@ -275,13 +373,27 @@ export default function CommunityScreen() {
             </View>
 
             <View style={styles.postActions}>
-              <TouchableOpacity style={styles.actionButton}>
-                <Ionicons name="heart-outline" size={20} color="#6426A9" />
-                <Text style={styles.actionText}>{post.likes}</Text>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleToggleLike(post.id)}
+              >
+                <Ionicons
+                  name={postLikes[post.id] ? "heart" : "heart-outline"}
+                  size={20}
+                  color={postLikes[post.id] ? "#ff4757" : "#6426A9"}
+                />
+                <Text style={styles.actionText}>
+                  {likeCounts[post.id] || 0}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleOpenComments(post.id)}
+              >
                 <Ionicons name="chatbubble-outline" size={20} color="#6426A9" />
-                <Text style={styles.actionText}>{post.comments}</Text>
+                <Text style={styles.actionText}>
+                  {commentCounts[post.id] || 0}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -301,10 +413,19 @@ export default function CommunityScreen() {
       {/* Create Post Modal */}
       <CreatePostModal
         visible={modalOpen}
-        type={modalType ?? 'tip'}
+        type={modalType ?? "tip"}
         onClose={() => setModalOpen(false)}
         onSubmit={onCreatePost}
       />
+
+      {/* Comment Modal */}
+      {selectedPost && (
+        <CommentModal
+          visible={commentModalOpen}
+          onClose={handleCloseComments}
+          postId={selectedPost}
+        />
+      )}
     </SafeAreaView>
   );
 }
