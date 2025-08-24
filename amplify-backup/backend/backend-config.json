@@ -1,0 +1,225 @@
+{
+  "api": {
+    "allyapi": {
+      "dependsOn": [
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "ally845d9ca4"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "safetyHandler"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "createReports"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "listReports"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "API Gateway"
+    }
+  },
+  "function": {
+    "ally845d9ca4": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "createReports": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "ingestNSWRFS": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "listReports": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "safetyHandler": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "seedCountryRisk": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    }
+  },
+  "parameters": {
+    "AMPLIFY_function_ally845d9ca4_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "ally845d9ca4"
+        }
+      ]
+    },
+    "AMPLIFY_function_ally845d9ca4_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "ally845d9ca4"
+        }
+      ]
+    },
+    "AMPLIFY_function_createReports_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "createReports"
+        }
+      ]
+    },
+    "AMPLIFY_function_createReports_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "createReports"
+        }
+      ]
+    },
+    "AMPLIFY_function_ingestNSWRFS_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "ingestNSWRFS"
+        }
+      ]
+    },
+    "AMPLIFY_function_ingestNSWRFS_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "ingestNSWRFS"
+        }
+      ]
+    },
+    "AMPLIFY_function_listReports_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "listReports"
+        }
+      ]
+    },
+    "AMPLIFY_function_listReports_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "listReports"
+        }
+      ]
+    },
+    "AMPLIFY_function_safetyHandler_cautionThreshold": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "safetyHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_safetyHandler_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "safetyHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_safetyHandler_rfsFeedUrl": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "safetyHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_safetyHandler_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "safetyHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_safetyHandler_safeThreshold": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "safetyHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_safetyHandler_tableCommunityReports": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "safetyHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_safetyHandler_tableCountryRisk": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "safetyHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_safetyHandler_tableLiveIncidents": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "safetyHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_seedCountryRisk_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "seedCountryRisk"
+        }
+      ]
+    },
+    "AMPLIFY_function_seedCountryRisk_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "seedCountryRisk"
+        }
+      ]
+    }
+  }
+}

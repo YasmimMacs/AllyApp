@@ -337,6 +337,20 @@ export default function MapScreen() {
   const handleZonePress = (zone: SafetyZone) => {
     setSelectedZone(zone);
     setShowZoneDetails(true);
+    
+    // Update map region to center on the selected zone
+    const newRegion = {
+      latitude: zone.coordinates.latitude,
+      longitude: zone.coordinates.longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    };
+    setMapRegion(newRegion);
+    
+    // Animate map to the selected zone
+    if (mapRef.current) {
+      mapRef.current.animateToRegion(newRegion, 1000);
+    }
   };
 
   const handleReportIssue = () => {
@@ -354,6 +368,17 @@ export default function MapScreen() {
   };
 
   const getCurrentSafetyStatus = () => {
+    // If a zone is selected, show its detailed status
+    if (selectedZone) {
+      return {
+        status: `${selectedZone.name}: ${selectedZone.type.toUpperCase()} Area (Score: ${selectedZone.safetyScore}/10)`,
+        color: getZoneColor(selectedZone.type),
+        icon: getZoneIcon(selectedZone.type),
+        zone: selectedZone
+      };
+    }
+    
+    // Otherwise, show status based on current location
     if (!currentCoords) return { status: "Unknown", color: "#6B7280", icon: "help-circle" };
     
     // Find the closest safety zone
@@ -372,7 +397,7 @@ export default function MapScreen() {
     });
 
     return {
-      status: `You are in a ${closestZone.type} area`,
+      status: `You are in a ${closestZone.type} area (${closestZone.name})`,
       color: getZoneColor(closestZone.type),
       icon: getZoneIcon(closestZone.type),
       zone: closestZone
@@ -404,22 +429,6 @@ export default function MapScreen() {
     setIsSearching(true);
     try {
       // Use reverse geocoding to search for locations
-      const results = await searchLocations(query);
-      setSearchResults(results);
-      setShowSearchResults(true);
-    } catch (error) {
-      console.error('Search error:', error);
-      setToastMessage('Search failed. Please try again.');
-      setToastType('error');
-      setShowToast(true);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const searchLocations = async (query: string) => {
-    try {
-      // Use expo-location's geocoding to search for locations
       const results = await Location.geocodeAsync(query);
       
       if (results.length > 0) {
@@ -503,12 +512,29 @@ export default function MapScreen() {
     setShowSearchResults(false);
   };
 
+  const clearZoneSelection = () => {
+    setSelectedZone(null);
+    setShowZoneDetails(false);
+    
+    // Return map to user's current location if available
+    if (currentCoords && mapRef.current) {
+      const newRegion = {
+        latitude: currentCoords.latitude,
+        longitude: currentCoords.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      };
+      setMapRegion(newRegion);
+      mapRef.current.animateToRegion(newRegion, 1000);
+    }
+  };
+
   const safetyStatus = getCurrentSafetyStatus();
 
   const filteredSafetyZones = safetyZones.filter(zone => {
     if (selectedFilter === "All") return true;
     if (selectedFilter === "Lighting") return zone.lighting === "Excellent";
-    if (selectedFilter === "Crowd Level") return zone.crowdLevel === "Moderate" || zone.crowdLevel === "High";
+    if (selectedFilter === "Crowd Level") return zone.lighting === "Moderate" || zone.lighting === "High";
     if (selectedFilter === "Reports") return zone.recentReports.length > 0;
     if (selectedFilter === "Safe Places") return zone.type === "safe";
     return true;
@@ -692,72 +718,119 @@ export default function MapScreen() {
             </Text>
           </View>
         ) : (
-          <MapView
-            ref={mapRef}
-            style={styles.map}
-            provider={PROVIDER_GOOGLE}
-            initialRegion={mapRegion}
-            showsUserLocation={true}
-            showsMyLocationButton={true}
-            showsCompass={true}
-            showsScale={true}
-            showsTraffic={false}
-            showsBuildings={true}
-            showsIndoors={true}
-            onRegionChange={setMapRegion}
-            onRegionChangeComplete={handleRegionChangeComplete}
-            onMapReady={() => {
-              console.log('Map is ready!');
-              console.log('Map dimensions:', { flex: 1 });
-              console.log('Initial region:', mapRegion);
+          <>
+            <MapView
+              ref={mapRef}
+              style={styles.map}
+              provider={PROVIDER_GOOGLE}
+              initialRegion={mapRegion}
+              showsUserLocation={true}
+              showsMyLocationButton={true}
+              showsCompass={true}
+              showsScale={true}
+              showsTraffic={false}
+              showsBuildings={true}
+              showsIndoors={true}
+              onRegionChange={setMapRegion}
+              onRegionChangeComplete={handleRegionChangeComplete}
+              onMapReady={() => {
+                console.log('Map is ready!');
+                console.log('Map dimensions:', { flex: 1 });
+                console.log('Initial region:', mapRegion);
 
-              // Center map on user location when ready
-              if (currentCoords && mapRef.current) {
-                const newRegion = {
-                  latitude: currentCoords.latitude,
-                  longitude: currentCoords.longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                };
-                mapRef.current.animateToRegion(newRegion, 1000);
-              }
-            }}
-            onLayout={() => console.log('Map layout completed')}
-          >
-            {/* Safety Zone Markers */}
-            {filteredSafetyZones.map((zone) => (
-              <Marker
-                key={zone.id}
-                coordinate={zone.coordinates}
-                title={zone.name}
-                description={`Safety Score: ${zone.safetyScore}/10`}
-                onPress={() => handleZonePress(zone)}
-                pinColor={getZoneColor(zone.type)}
-              >
-                <Callout>
-                  <View style={styles.calloutContainer}>
-                    <Text style={styles.calloutTitle}>{zone.name}</Text>
-                    <Text style={styles.calloutSubtitle}>
-                      Safety Score: {zone.safetyScore}/10
-                    </Text>
-                    <Text style={styles.calloutType}>
-                      {zone.type.charAt(0).toUpperCase() + zone.type.slice(1)} Area
-                    </Text>
-                  </View>
-                </Callout>
-              </Marker>
-            ))}
+                // Center map on user location when ready
+                if (currentCoords && mapRef.current) {
+                  const newRegion = {
+                    latitude: currentCoords.latitude,
+                    longitude: currentCoords.longitude,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                  };
+                  mapRef.current.animateToRegion(newRegion, 1000);
+                }
+              }}
+              onLayout={() => console.log('Map layout completed')}
+            >
+              {/* Safety Zone Markers */}
+              {filteredSafetyZones.map((zone) => (
+                <Marker
+                  key={zone.id}
+                  coordinate={zone.coordinates}
+                  title={zone.name}
+                  description={`Safety Score: ${zone.safetyScore}/10`}
+                  onPress={() => handleZonePress(zone)}
+                  pinColor={getZoneColor(zone.type)}
+                  opacity={selectedZone && selectedZone.id === zone.id ? 1 : 0.8}
+                >
+                  <Callout>
+                    <View style={styles.calloutContainer}>
+                      <Text style={styles.calloutTitle}>{zone.name}</Text>
+                      <Text style={styles.calloutSubtitle}>
+                        Safety Score: {zone.safetyScore}/10
+                      </Text>
+                      <Text style={styles.calloutType}>
+                        {zone.type.charAt(0).toUpperCase() + zone.type.slice(1)} Area
+                      </Text>
+                      
+                      {/* Show selection indicator */}
+                      {selectedZone && selectedZone.id === zone.id && (
+                        <View style={styles.selectedZoneIndicator}>
+                          <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                          <Text style={styles.selectedZoneText}>Selected</Text>
+                        </View>
+                      )}
+                    </View>
+                  </Callout>
+                </Marker>
+              ))}
 
-            {/* Current Location Marker */}
-            {currentCoords && (
-              <Marker
-                coordinate={currentCoords}
-                title="Your Location"
-                description={currentAddress || "Current Location"}
-                pinColor="#6426A9"
-              />
+              {/* Incident Markers */}
+              {/* Incident Markers are not part of the static safetyZones, so they are not displayed here */}
+
+              {/* Community Report Markers */}
+              {/* Community Report Markers are not part of the static safetyZones, so they are not displayed here */}
+
+              {/* Current Location Marker */}
+              {currentCoords && (
+                <Marker
+                  coordinate={currentCoords}
+                  title="Your Location"
+                  description={currentAddress || "Current Location"}
+                  pinColor="#6426A9"
+                />
+              )}
+            </MapView>
+
+            {/* Loading overlay when fetching data */}
+            {isLoadingLocation && (
+              <View style={styles.mapLoadingOverlay}>
+                <View style={styles.mapLoadingContent}>
+                  <ActivityIndicator size="large" color="#6426A9" />
+                  <Text style={styles.mapLoadingText}>
+                    Getting your location...
+                  </Text>
+                </View>
+              </View>
             )}
-          </MapView>
+
+            {/* Error overlay when API calls fail */}
+            {addressError && (
+              <View style={styles.mapErrorOverlay}>
+                <View style={styles.mapErrorContent}>
+                  <Ionicons name="warning" size={32} color="#EF4444" />
+                  <Text style={styles.mapErrorText}>
+                    {addressError}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.mapErrorButton}
+                    onPress={() => currentCoords && fetchAddress(currentCoords.latitude, currentCoords.longitude)}
+                  >
+                    <Text style={styles.mapErrorButtonText}>Retry</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </>
         )}
 
         {/* Report Button - Floating over map */}
@@ -772,102 +845,129 @@ export default function MapScreen() {
         <Text style={[styles.statusText, { color: safetyStatus.color }]}>
           {safetyStatus.status}
         </Text>
+        
+        {/* Show selected zone indicator */}
+        {selectedZone && (
+          <TouchableOpacity 
+            style={styles.clearSelectionButton}
+            onPress={clearZoneSelection}
+          >
+            <Ionicons name="close-circle" size={16} color={safetyStatus.color} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Zone Details Modal */}
       <Modal
-        visible={showZoneDetails}
+        visible={showZoneDetails && selectedZone !== null}
         animationType="slide"
         transparent={true}
         onRequestClose={() => setShowZoneDetails(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{selectedZone?.name}</Text>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowZoneDetails(false)}
-              >
-                <Ionicons name="close" size={24} color="#6426A9" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody}>
-              {/* Safety Score */}
-              <View style={styles.safetyScoreContainer}>
-                <Text style={styles.safetyScoreLabel}>Safety Score</Text>
-                <Text
-                  style={[
-                    styles.safetyScoreValue,
-                    {
-                      color:
-                        (selectedZone?.safetyScore || 0) >= 8
-                          ? "#10B981"
-                          : (selectedZone?.safetyScore || 0) >= 6
-                          ? "#F59E0B"
-                          : "#EF4444",
-                    },
-                  ]}
-                >
-                  {selectedZone?.safetyScore}/10
-                </Text>
-              </View>
-
-              {/* Quick Stats */}
-              <View style={styles.statsContainer}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>Lighting</Text>
-                  <Text style={styles.statValue}>{selectedZone?.lighting}</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>Crowd Level</Text>
-                  <Text style={styles.statValue}>
-                    {selectedZone?.crowdLevel}
+            {selectedZone && (
+              <>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>
+                    {selectedZone.name}
                   </Text>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setShowZoneDetails(false)}
+                  >
+                    <Ionicons name="close" size={24} color="#6426A9" />
+                  </TouchableOpacity>
                 </View>
-              </View>
 
-              {/* Recent Reports */}
-              <View style={styles.reportsContainer}>
-                <Text style={styles.reportsTitle}>Recent Reports</Text>
-                {selectedZone?.recentReports.map((report, index) => (
-                  <View key={index} style={styles.reportItem}>
-                    <Text style={styles.reportText}>{report.text}</Text>
-                    <Text style={styles.reportMeta}>
-                      {report.user} • {report.time}
+                <ScrollView style={styles.modalBody}>
+                  {/* Safety Score */}
+                  <View style={styles.safetyScoreContainer}>
+                    <Text style={styles.safetyScoreLabel}>Safety Score</Text>
+                    <Text
+                      style={[
+                        styles.safetyScoreValue,
+                        {
+                          color: selectedZone.safetyScore >= 7.5
+                            ? "#10B981"
+                            : selectedZone.safetyScore >= 4.0
+                            ? "#F59E0B"
+                            : "#EF4444",
+                        },
+                      ]}
+                    >
+                      {selectedZone.safetyScore}/10
                     </Text>
                   </View>
-                ))}
-              </View>
 
-              {/* Safety Tips */}
-              <View style={styles.tipsContainer}>
-                <Text style={styles.tipsTitle}>Safety Tips</Text>
-                {selectedZone?.tips.map((tip, index) => (
-                  <View key={index} style={styles.tipItem}>
-                    <Text style={styles.tipBullet}>•</Text>
-                    <Text style={styles.tipText}>{tip}</Text>
+                  {/* Quick Stats */}
+                  <View style={styles.statsContainer}>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statLabel}>Coverage</Text>
+                      <Text style={styles.statValue}>{selectedZone.lighting}</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statLabel}>Confidence</Text>
+                      <Text style={styles.statValue}>
+                        {selectedZone.crowdLevel}
+                      </Text>
+                    </View>
                   </View>
-                ))}
-              </View>
-            </ScrollView>
 
-            {/* Action Buttons */}
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.actionButtonOutline}
-                onPress={handleReportIssue}
-              >
-                <Text style={styles.actionButtonOutlineText}>Report Issue</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleGetDirections}
-              >
-                <Text style={styles.actionButtonText}>Get Directions</Text>
-              </TouchableOpacity>
-            </View>
+                  {/* Community Info */}
+                  {selectedZone.recentReports && selectedZone.recentReports.length > 0 && (
+                    <View style={styles.reportsContainer}>
+                      <Text style={styles.reportsTitle}>Community Assessment</Text>
+                      {selectedZone.recentReports.map((report, index) => (
+                        <View key={index} style={styles.reportItem}>
+                          <Text style={styles.reportText}>{report.text}</Text>
+                          <Text style={styles.reportMeta}>
+                            {report.user} • {report.time}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Incidents */}
+                  {/* Incidents are not part of the static safetyZones, so they are not displayed here */}
+
+                  {/* Sources */}
+                  {selectedZone.tips && selectedZone.tips.length > 0 && (
+                    <View style={styles.tipsContainer}>
+                      <Text style={styles.tipsTitle}>Tips</Text>
+                      {selectedZone.tips.map((tip, index) => (
+                        <View key={index} style={styles.tipItem}>
+                          <Text style={styles.tipBullet}>•</Text>
+                          <Text style={styles.tipText}>
+                            {tip}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Last Updated */}
+                  {/* Last Updated is not part of the static safetyZones, so it's not displayed here */}
+                </ScrollView>
+
+                {/* Action Buttons */}
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    style={styles.actionButtonOutline}
+                    onPress={handleReportIssue}
+                  >
+                    <Text style={styles.actionButtonOutlineText}>Report Issue</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={handleGetDirections}
+                  >
+                    <Text style={styles.actionButtonText}>Get Directions</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -1296,5 +1396,101 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
     color: "#6426A9",
     fontWeight: "500",
+  },
+  refreshButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  noDataMessage: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -100 }, { translateY: -10 }],
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  noDataText: {
+    fontSize: moderateScale(14),
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  mapLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  mapLoadingContent: {
+    alignItems: 'center',
+  },
+  mapLoadingText: {
+    marginTop: 10,
+    fontSize: moderateScale(16),
+    color: '#6426A9',
+  },
+  mapErrorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  mapErrorContent: {
+    alignItems: 'center',
+  },
+  mapErrorText: {
+    marginTop: 10,
+    fontSize: moderateScale(16),
+    color: '#EF4444',
+    textAlign: 'center',
+  },
+  mapErrorButton: {
+    marginTop: 20,
+    backgroundColor: '#6426A9',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  mapErrorButtonText: {
+    color: '#FFFFFF',
+    fontSize: moderateScale(16),
+    fontWeight: '500',
+  },
+  clearSelectionButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    padding: 8,
+    zIndex: 10,
+  },
+  selectedZoneIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    backgroundColor: '#E0F2F7',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+  },
+  selectedZoneText: {
+    fontSize: moderateScale(12),
+    color: '#10B981',
+    marginLeft: 4,
   },
 });

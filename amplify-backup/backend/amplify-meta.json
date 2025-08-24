@@ -1,0 +1,372 @@
+{
+  "providers": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-ally-dev-96be4-authRole",
+      "UnauthRoleArn": "arn:aws:iam::889174276273:role/amplify-ally-dev-96be4-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::889174276273:role/amplify-ally-dev-96be4-authRole",
+      "Region": "ap-southeast-2",
+      "DeploymentBucketName": "amplify-ally-dev-96be4-deployment",
+      "UnauthRoleName": "amplify-ally-dev-96be4-unauthRole",
+      "StackName": "amplify-ally-dev-96be4",
+      "StackId": "arn:aws:cloudformation:ap-southeast-2:889174276273:stack/amplify-ally-dev-96be4/bfc4d450-6c70-11f0-90f5-06db4cb685a7",
+      "AmplifyAppId": "d2psm6s8jg6yu7"
+    }
+  },
+  "api": {
+    "allyapi": {
+      "dependsOn": [
+        {
+          "category": "function",
+          "resourceName": "ally845d9ca4",
+          "attributes": [
+            "Name",
+            "Arn"
+          ]
+        },
+        {
+          "category": "function",
+          "resourceName": "safetyHandler",
+          "attributes": [
+            "Name",
+            "Arn"
+          ]
+        },
+        {
+          "category": "function",
+          "resourceName": "createReports",
+          "attributes": [
+            "Name",
+            "Arn"
+          ]
+        },
+        {
+          "category": "function",
+          "resourceName": "listReports",
+          "attributes": [
+            "Name",
+            "Arn"
+          ]
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "API Gateway",
+      "output": {
+        "ApiName": "allyapi",
+        "RootUrl": "https://rup8z25us6.execute-api.ap-southeast-2.amazonaws.com/dev",
+        "ApiId": "rup8z25us6"
+      },
+      "lastPushTimeStamp": "2025-08-24T07:43:31.735Z",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-ally-dev-96be4-deployment/amplify-cfn-templates/api/allyapi-cloudformation-template.json",
+        "logicalId": "apiallyapi"
+      },
+      "lastPushDirHash": "LvRovjv4RhnEWhJxtUCg10Rx76E="
+    }
+  },
+  "auth": {
+    "allyab79b52b": {
+      "customAuth": false,
+      "dependsOn": [],
+      "frontendAuthConfig": {
+        "mfaConfiguration": "OFF",
+        "mfaTypes": [
+          "SMS"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyMinLength": 8,
+          "passwordPolicyCharacters": []
+        },
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "socialProviders": [],
+        "usernameAttributes": [
+          "EMAIL",
+          "PHONE_NUMBER"
+        ],
+        "verificationMechanisms": [
+          "EMAIL"
+        ]
+      },
+      "providerPlugin": "awscloudformation",
+      "service": "Cognito",
+      "output": {
+        "UserPoolId": "ap-southeast-2_lX5ofG0Cm",
+        "AppClientIDWeb": "3u8qti7e7jhr146a9ijpe62hlm",
+        "AppClientID": "2bal9kd5532lirh8jnuu14fvf0",
+        "HostedUIDomain": "ally-login-dev",
+        "IdentityPoolId": "ap-southeast-2:38de95a9-b660-4502-9d69-9cae26b864ca",
+        "UserPoolArn": "arn:aws:cognito-idp:ap-southeast-2:889174276273:userpool/ap-southeast-2_lX5ofG0Cm",
+        "IdentityPoolName": "allyab79b52b_identitypool_ab79b52b__dev",
+        "OAuthMetadata": "{\"AllowedOAuthFlows\":[\"code\"],\"AllowedOAuthScopes\":[\"phone\",\"email\",\"openid\",\"profile\",\"aws.cognito.signin.user.admin\"],\"CallbackURLs\":[\"http://localhost:19006/\",\"https://ally.com.au/\"],\"LogoutURLs\":[\"http://localhost:19006/\",\"https://ally.com.au/\"]}",
+        "UserPoolName": "allyab79b52b_userpool_ab79b52b"
+      },
+      "lastPushTimeStamp": "2025-08-24T07:43:31.737Z",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-ally-dev-96be4-deployment/amplify-cfn-templates/auth/allyab79b52b-cloudformation-template.json",
+        "logicalId": "authallyab79b52b"
+      }
+    }
+  },
+  "function": {
+    "ally845d9ca4": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda",
+      "output": {
+        "LambdaExecutionRoleArn": "arn:aws:iam::889174276273:role/allyLambdaRole99c38810-dev",
+        "Region": "ap-southeast-2",
+        "Arn": "arn:aws:lambda:ap-southeast-2:889174276273:function:ally845d9ca4-dev",
+        "Name": "ally845d9ca4-dev",
+        "LambdaExecutionRole": "allyLambdaRole99c38810-dev"
+      },
+      "lastPushTimeStamp": "2025-08-24T07:44:03.977Z",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-ally-dev-96be4-deployment/amplify-cfn-templates/function/ally845d9ca4-cloudformation-template.json",
+        "logicalId": "functionally845d9ca4"
+      },
+      "s3Bucket": {
+        "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
+        "s3Key": "amplify-builds/ally845d9ca4-2f745830574e2b6c656f-build.zip"
+      },
+      "lastBuildTimeStamp": "2025-08-24T07:43:37.672Z",
+      "lastBuildType": "PROD",
+      "lastPackageTimeStamp": "2025-08-24T07:43:37.709Z",
+      "distZipFilename": "ally845d9ca4-2f745830574e2b6c656f-build.zip"
+    },
+    "safetyHandler": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda",
+      "dependsOn": [
+        {
+          "category": "storage",
+          "resourceName": "dynamoc6b731c4",
+          "attributes": [
+            "Name",
+            "Arn",
+            "StreamArn"
+          ]
+        },
+        {
+          "category": "storage",
+          "resourceName": "LiveIncidents",
+          "attributes": [
+            "Name",
+            "Arn",
+            "StreamArn"
+          ]
+        },
+        {
+          "category": "storage",
+          "resourceName": "CommunityReports",
+          "attributes": [
+            "Name",
+            "Arn",
+            "StreamArn"
+          ]
+        }
+      ],
+      "lastBuildTimeStamp": "2025-08-24T07:43:38.687Z",
+      "lastBuildType": "PROD",
+      "lastPackageTimeStamp": "2025-08-24T07:43:40.277Z",
+      "distZipFilename": "safetyHandler-54567465323333374d52-build.zip",
+      "s3Bucket": {
+        "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
+        "s3Key": "amplify-builds/safetyHandler-54567465323333374d52-build.zip"
+      },
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-ally-dev-96be4-deployment/amplify-cfn-templates/function/safetyHandler-cloudformation-template.json",
+        "logicalId": "functionsafetyHandler"
+      },
+      "lastPushTimeStamp": "2025-08-24T07:44:03.976Z",
+      "output": {
+        "LambdaExecutionRoleArn": "arn:aws:iam::889174276273:role/allyLambdaRolec291637d-dev",
+        "Region": "ap-southeast-2",
+        "Arn": "arn:aws:lambda:ap-southeast-2:889174276273:function:safetyHandler-dev",
+        "Name": "safetyHandler-dev",
+        "LambdaExecutionRole": "allyLambdaRolec291637d-dev"
+      },
+      "lastPushDirHash": "TM4pNytUpzjqNvfDeR4oIFcLRMU="
+    },
+    "createReports": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda",
+      "dependsOn": [],
+      "lastBuildTimeStamp": "2025-08-24T07:43:44.279Z",
+      "lastBuildType": "PROD",
+      "lastPackageTimeStamp": "2025-08-24T07:43:45.523Z",
+      "distZipFilename": "createReports-56323276385a31354150-build.zip",
+      "s3Bucket": {
+        "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
+        "s3Key": "amplify-builds/createReports-56323276385a31354150-build.zip"
+      },
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-ally-dev-96be4-deployment/amplify-cfn-templates/function/createReports-cloudformation-template.json",
+        "logicalId": "functioncreateReports"
+      },
+      "lastPushTimeStamp": "2025-08-24T07:44:04.041Z",
+      "output": {
+        "LambdaExecutionRoleArn": "arn:aws:iam::889174276273:role/allyLambdaRole5c20faac-dev",
+        "Region": "ap-southeast-2",
+        "Arn": "arn:aws:lambda:ap-southeast-2:889174276273:function:createReports-dev",
+        "Name": "createReports-dev",
+        "LambdaExecutionRole": "allyLambdaRole5c20faac-dev"
+      },
+      "lastPushDirHash": "kCjp4ry7U0MtL39I08/OTQ74AHE="
+    },
+    "listReports": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda",
+      "dependsOn": [],
+      "lastBuildTimeStamp": "2025-08-24T07:43:51.278Z",
+      "lastBuildType": "PROD",
+      "lastPackageTimeStamp": "2025-08-24T07:43:52.605Z",
+      "distZipFilename": "listReports-4577504d2f56656b3463-build.zip",
+      "s3Bucket": {
+        "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
+        "s3Key": "amplify-builds/listReports-4577504d2f56656b3463-build.zip"
+      },
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-ally-dev-96be4-deployment/amplify-cfn-templates/function/listReports-cloudformation-template.json",
+        "logicalId": "functionlistReports"
+      },
+      "lastPushTimeStamp": "2025-08-24T07:44:04.058Z",
+      "output": {
+        "LambdaExecutionRoleArn": "arn:aws:iam::889174276273:role/allyLambdaRolecf2ae553-dev",
+        "Region": "ap-southeast-2",
+        "Arn": "arn:aws:lambda:ap-southeast-2:889174276273:function:listReports-dev",
+        "Name": "listReports-dev",
+        "LambdaExecutionRole": "allyLambdaRolecf2ae553-dev"
+      },
+      "lastPushDirHash": "c3zDypOQ1bTf2kEpRWu3du2lsu8="
+    },
+    "seedCountryRisk": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda",
+      "dependsOn": [],
+      "lastBuildTimeStamp": "2025-08-24T07:43:56.426Z",
+      "lastBuildType": "PROD",
+      "lastPackageTimeStamp": "2025-08-24T07:43:57.603Z",
+      "distZipFilename": "seedCountryRisk-6d6b706a785059503264-build.zip",
+      "s3Bucket": {
+        "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
+        "s3Key": "amplify-builds/seedCountryRisk-6d6b706a785059503264-build.zip"
+      },
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-ally-dev-96be4-deployment/amplify-cfn-templates/function/seedCountryRisk-cloudformation-template.json",
+        "logicalId": "functionseedCountryRisk"
+      },
+      "lastPushTimeStamp": "2025-08-24T07:44:04.064Z",
+      "output": {
+        "LambdaExecutionRoleArn": "arn:aws:iam::889174276273:role/allyLambdaRole5bda41ae-dev",
+        "Region": "ap-southeast-2",
+        "Arn": "arn:aws:lambda:ap-southeast-2:889174276273:function:seedCountryRisk-dev",
+        "Name": "seedCountryRisk-dev",
+        "LambdaExecutionRole": "allyLambdaRole5bda41ae-dev"
+      },
+      "lastPushDirHash": "hHi4oimOF6N/w6ruMBV52WVZynw=",
+      "lastDevBuildTimeStamp": "2025-08-24T06:09:12.391Z"
+    },
+    "ingestNSWRFS": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda",
+      "dependsOn": [],
+      "lastBuildTimeStamp": "2025-08-24T07:44:00.206Z",
+      "lastBuildType": "PROD",
+      "lastPackageTimeStamp": "2025-08-24T07:44:01.683Z",
+      "distZipFilename": "ingestNSWRFS-64756d6e4d396f625231-build.zip",
+      "s3Bucket": {
+        "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
+        "s3Key": "amplify-builds/ingestNSWRFS-64756d6e4d396f625231-build.zip"
+      },
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-ally-dev-96be4-deployment/amplify-cfn-templates/function/ingestNSWRFS-cloudformation-template.json",
+        "logicalId": "functioningestNSWRFS"
+      },
+      "lastPushTimeStamp": "2025-08-24T07:44:04.053Z",
+      "output": {
+        "LambdaExecutionRoleArn": "arn:aws:iam::889174276273:role/allyLambdaRolebc5dedb9-dev",
+        "Region": "ap-southeast-2",
+        "Arn": "arn:aws:lambda:ap-southeast-2:889174276273:function:ingestNSWRFS-dev",
+        "Name": "ingestNSWRFS-dev",
+        "LambdaExecutionRole": "allyLambdaRolebc5dedb9-dev"
+      },
+      "lastPushDirHash": "2R2em6uM3sJBcVg+00dA3+KplNk="
+    }
+  },
+  "storage": {
+    "dynamoc6b731c4": {
+      "service": "DynamoDB",
+      "providerPlugin": "awscloudformation",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-ally-dev-96be4-deployment/amplify-cfn-templates/storage/dynamoc6b731c4-cloudformation-template.json",
+        "logicalId": "storagedynamoc6b731c4"
+      },
+      "lastPushTimeStamp": "2025-08-24T07:43:31.742Z",
+      "output": {
+        "PartitionKeyName": "CountryCOde",
+        "Region": "ap-southeast-2",
+        "Arn": "arn:aws:dynamodb:ap-southeast-2:889174276273:table/CountryRisk-dev",
+        "StreamArn": "arn:aws:dynamodb:ap-southeast-2:889174276273:table/CountryRisk-dev/stream/2025-08-22T12:12:51.813",
+        "PartitionKeyType": "S",
+        "Name": "CountryRisk-dev"
+      },
+      "lastPushDirHash": "dvG5vK6zKgAc/y55MvqIQQ3srdM="
+    },
+    "LiveIncidents": {
+      "service": "DynamoDB",
+      "providerPlugin": "awscloudformation",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-ally-dev-96be4-deployment/amplify-cfn-templates/storage/LiveIncidents-cloudformation-template.json",
+        "logicalId": "storageLiveIncidents"
+      },
+      "lastPushTimeStamp": "2025-08-24T07:43:31.743Z",
+      "output": {
+        "PartitionKeyName": "id",
+        "Region": "ap-southeast-2",
+        "Arn": "arn:aws:dynamodb:ap-southeast-2:889174276273:table/LiveIncidents-dev",
+        "StreamArn": "arn:aws:dynamodb:ap-southeast-2:889174276273:table/LiveIncidents-dev/stream/2025-08-22T12:12:52.207",
+        "PartitionKeyType": "S",
+        "Name": "LiveIncidents-dev"
+      },
+      "lastPushDirHash": "N5AM1JYe7LjI6PSGqUsjz8vCSyw="
+    },
+    "CommunityReports": {
+      "service": "DynamoDB",
+      "providerPlugin": "awscloudformation",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-ally-dev-96be4-deployment/amplify-cfn-templates/storage/CommunityReports-cloudformation-template.json",
+        "logicalId": "storageCommunityReports"
+      },
+      "lastPushTimeStamp": "2025-08-24T07:43:31.744Z",
+      "output": {
+        "PartitionKeyName": "ip",
+        "Region": "ap-southeast-2",
+        "Arn": "arn:aws:dynamodb:ap-southeast-2:889174276273:table/CommunityReports-dev",
+        "StreamArn": "arn:aws:dynamodb:ap-southeast-2:889174276273:table/CommunityReports-dev/stream/2025-08-22T12:14:51.837",
+        "PartitionKeyType": "S",
+        "Name": "CommunityReports-dev"
+      },
+      "lastPushDirHash": "0x3FKFFK14YDaeez9lySl4NzkcQ="
+    },
+    "Safety2025": {
+      "service": "S3",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "output": {
+        "BucketName": "allyf7b7a97ff61e4324b8d2c5230ea83d3496be4-dev",
+        "Region": "ap-southeast-2"
+      },
+      "lastPushTimeStamp": "2025-08-24T07:43:31.745Z",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-ally-dev-96be4-deployment/amplify-cfn-templates/storage/cloudformation-template.json",
+        "logicalId": "storageSafety2025"
+      }
+    }
+  }
+}

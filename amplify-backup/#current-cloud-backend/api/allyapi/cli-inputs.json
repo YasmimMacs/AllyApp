@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "paths": {
+    "/v1/items": {
+      "name": "/v1/items",
+      "lambdaFunction": "ally845d9ca4",
+      "permissions": {
+        "setting": "open"
+      }
+    },
+    "/safety": {
+      "name": "/safety",
+      "lambdaFunction": "safetyHandler",
+      "permissions": {
+        "setting": "open"
+      }
+    },
+    "/reports": {
+      "name": "/reports",
+      "lambdaFunction": "createReports",
+      "permissions": {
+        "setting": "open"
+      }
+    },
+    "/list-reports": {
+      "name": "/list-reports",
+      "lambdaFunction": "listReports",
+      "permissions": {
+        "setting": "open"
+      }
+    }
+  }
+}

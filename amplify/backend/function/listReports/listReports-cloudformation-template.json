@@ -47,12 +47,12 @@
         "FunctionName": {
           "Fn::If": [
             "ShouldNotCreateEnvResources",
-            "listReports",
+            "ListReports",
             {
               "Fn::Join": [
                 "",
                 [
-                  "listReports",
+                  "ListReports",
                   "-",
                   {
                     "Ref": "env"
@@ -89,12 +89,12 @@
         "RoleName": {
           "Fn::If": [
             "ShouldNotCreateEnvResources",
-            "allyLambdaRolecf2ae553",
+            "allyappLambdaRole690fddc2",
             {
               "Fn::Join": [
                 "",
                 [
-                  "allyLambdaRolecf2ae553",
+                  "allyappLambdaRole690fddc2",
                   "-",
                   {
                     "Ref": "env"

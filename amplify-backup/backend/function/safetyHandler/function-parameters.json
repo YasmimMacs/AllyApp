@@ -1,0 +1,45 @@
+{
+  "permissions": {
+    "custom": [
+      {
+        "Action": [
+          "dynamodb:GetItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ],
+        "Resource": [
+          "arn:aws:dynamodb:*:*:table/CountryRisk*",
+          "arn:aws:dynamodb:*:*:table/LiveIncidents*",
+          "arn:aws:dynamodb:*:*:table/CommunityReports*"
+        ]
+      }
+    ]
+  },
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "cautionThreshold",
+      "environmentVariableName": "CAUTION_THRESHOLD"
+    },
+    {
+      "cloudFormationParameterName": "safeThreshold",
+      "environmentVariableName": "SAFE_THRESHOLD"
+    },
+    {
+      "cloudFormationParameterName": "tableCountryRisk",
+      "environmentVariableName": "TABLE_COUNTRY_RISK"
+    },
+    {
+      "cloudFormationParameterName": "tableLiveIncidents",
+      "environmentVariableName": "TABLE_LIVE_INCIDENTS"
+    },
+    {
+      "cloudFormationParameterName": "tableCommunityReports",
+      "environmentVariableName": "TABLE_COMMUNITY_REPORTS"
+    },
+    {
+      "cloudFormationParameterName": "rfsFeedUrl",
+      "environmentVariableName": "RFS_FEED_URL"
+    }
+  ]
+}

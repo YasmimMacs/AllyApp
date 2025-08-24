@@ -1,0 +1,431 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "{\"createdOn\":\"Mac\",\"createdBy\":\"Amplify\",\"createdWith\":\"14.0.0\",\"stackType\":\"function-Lambda\",\"metadata\":{\"whyContinueWithGen1\":\"Gen 2 is missing features I need from Gen 1\"}}",
+  "Parameters": {
+    "CloudWatchRule": {
+      "Type": "String",
+      "Default": "NONE",
+      "Description": " Schedule Expression"
+    },
+    "deploymentBucketName": {
+      "Type": "String"
+    },
+    "env": {
+      "Type": "String"
+    },
+    "s3Key": {
+      "Type": "String"
+    },
+    "storagedynamoc6b731c4Name": {
+      "Type": "String",
+      "Default": "storagedynamoc6b731c4Name"
+    },
+    "storagedynamoc6b731c4Arn": {
+      "Type": "String",
+      "Default": "storagedynamoc6b731c4Arn"
+    },
+    "storagedynamoc6b731c4StreamArn": {
+      "Type": "String",
+      "Default": "storagedynamoc6b731c4StreamArn"
+    },
+    "storageLiveIncidentsName": {
+      "Type": "String",
+      "Default": "storageLiveIncidentsName"
+    },
+    "storageLiveIncidentsArn": {
+      "Type": "String",
+      "Default": "storageLiveIncidentsArn"
+    },
+    "storageLiveIncidentsStreamArn": {
+      "Type": "String",
+      "Default": "storageLiveIncidentsStreamArn"
+    },
+    "storageCommunityReportsName": {
+      "Type": "String",
+      "Default": "storageCommunityReportsName"
+    },
+    "storageCommunityReportsArn": {
+      "Type": "String",
+      "Default": "storageCommunityReportsArn"
+    },
+    "storageCommunityReportsStreamArn": {
+      "Type": "String",
+      "Default": "storageCommunityReportsStreamArn"
+    },
+    "cautionThreshold": {
+      "Type": "String"
+    },
+    "safeThreshold": {
+      "Type": "String"
+    },
+    "tableCountryRisk": {
+      "Type": "String"
+    },
+    "tableLiveIncidents": {
+      "Type": "String"
+    },
+    "tableCommunityReports": {
+      "Type": "String"
+    },
+    "rfsFeedUrl": {
+      "Type": "String"
+    }
+  },
+  "Conditions": {
+    "ShouldNotCreateEnvResources": {
+      "Fn::Equals": [
+        {
+          "Ref": "env"
+        },
+        "NONE"
+      ]
+    }
+  },
+  "Resources": {
+    "LambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Metadata": {
+        "aws:asset:path": "./src",
+        "aws:asset:property": "Code"
+      },
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "deploymentBucketName"
+          },
+          "S3Key": {
+            "Ref": "s3Key"
+          }
+        },
+        "Handler": "index.handler",
+        "FunctionName": {
+          "Fn::If": [
+            "ShouldNotCreateEnvResources",
+            "safetyHandler",
+            {
+              "Fn::Join": [
+                "",
+                [
+                  "safetyHandler",
+                  "-",
+                  {
+                    "Ref": "env"
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "ENV": {
+              "Ref": "env"
+            },
+            "REGION": {
+              "Ref": "AWS::Region"
+            },
+            "STORAGE_DYNAMOC6B731C4_NAME": {
+              "Ref": "storagedynamoc6b731c4Name"
+            },
+            "STORAGE_DYNAMOC6B731C4_ARN": {
+              "Ref": "storagedynamoc6b731c4Arn"
+            },
+            "STORAGE_DYNAMOC6B731C4_STREAMARN": {
+              "Ref": "storagedynamoc6b731c4StreamArn"
+            },
+            "STORAGE_LIVEINCIDENTS_NAME": {
+              "Ref": "storageLiveIncidentsName"
+            },
+            "STORAGE_LIVEINCIDENTS_ARN": {
+              "Ref": "storageLiveIncidentsArn"
+            },
+            "STORAGE_LIVEINCIDENTS_STREAMARN": {
+              "Ref": "storageLiveIncidentsStreamArn"
+            },
+            "STORAGE_COMMUNITYREPORTS_NAME": {
+              "Ref": "storageCommunityReportsName"
+            },
+            "STORAGE_COMMUNITYREPORTS_ARN": {
+              "Ref": "storageCommunityReportsArn"
+            },
+            "STORAGE_COMMUNITYREPORTS_STREAMARN": {
+              "Ref": "storageCommunityReportsStreamArn"
+            },
+            "CAUTION_THRESHOLD": {
+              "Ref": "cautionThreshold"
+            },
+            "SAFE_THRESHOLD": {
+              "Ref": "safeThreshold"
+            },
+            "TABLE_COUNTRY_RISK": {
+              "Ref": "tableCountryRisk"
+            },
+            "TABLE_LIVE_INCIDENTS": {
+              "Ref": "tableLiveIncidents"
+            },
+            "TABLE_COMMUNITY_REPORTS": {
+              "Ref": "tableCommunityReports"
+            },
+            "RFS_FEED_URL": {
+              "Ref": "rfsFeedUrl"
+            }
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Layers": [],
+        "Timeout": 25
+      }
+    },
+    "LambdaExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": {
+          "Fn::If": [
+            "ShouldNotCreateEnvResources",
+            "allyLambdaRolec291637d",
+            {
+              "Fn::Join": [
+                "",
+                [
+                  "allyLambdaRolec291637d",
+                  "-",
+                  {
+                    "Ref": "env"
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "lambdaexecutionpolicy": {
+      "DependsOn": [
+        "LambdaExecutionRole"
+      ],
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "lambda-execution-policy",
+        "Roles": [
+          {
+            "Ref": "LambdaExecutionRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+              ],
+              "Resource": {
+                "Fn::Sub": [
+                  "arn:aws:logs:${region}:${account}:log-group:/aws/lambda/${lambda}:log-stream:*",
+                  {
+                    "region": {
+                      "Ref": "AWS::Region"
+                    },
+                    "account": {
+                      "Ref": "AWS::AccountId"
+                    },
+                    "lambda": {
+                      "Ref": "LambdaFunction"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "AmplifyResourcesPolicy": {
+      "DependsOn": [
+        "LambdaExecutionRole"
+      ],
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "amplify-lambda-execution-policy",
+        "Roles": [
+          {
+            "Ref": "LambdaExecutionRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "dynamodb:Put*",
+                "dynamodb:Create*",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PartiQLInsert",
+                "dynamodb:Get*",
+                "dynamodb:BatchGetItem",
+                "dynamodb:List*",
+                "dynamodb:Describe*",
+                "dynamodb:Scan",
+                "dynamodb:Query",
+                "dynamodb:PartiQLSelect",
+                "dynamodb:Update*",
+                "dynamodb:RestoreTable*",
+                "dynamodb:PartiQLUpdate",
+                "dynamodb:Delete*",
+                "dynamodb:PartiQLDelete"
+              ],
+              "Resource": [
+                {
+                  "Ref": "storagedynamoc6b731c4Arn"
+                },
+                {
+                  "Fn::Join": [
+                    "/",
+                    [
+                      {
+                        "Ref": "storagedynamoc6b731c4Arn"
+                      },
+                      "index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "dynamodb:Put*",
+                "dynamodb:Create*",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PartiQLInsert",
+                "dynamodb:Get*",
+                "dynamodb:BatchGetItem",
+                "dynamodb:List*",
+                "dynamodb:Describe*",
+                "dynamodb:Scan",
+                "dynamodb:Query",
+                "dynamodb:PartiQLSelect",
+                "dynamodb:Update*",
+                "dynamodb:RestoreTable*",
+                "dynamodb:PartiQLUpdate",
+                "dynamodb:Delete*",
+                "dynamodb:PartiQLDelete"
+              ],
+              "Resource": [
+                {
+                  "Ref": "storageLiveIncidentsArn"
+                },
+                {
+                  "Fn::Join": [
+                    "/",
+                    [
+                      {
+                        "Ref": "storageLiveIncidentsArn"
+                      },
+                      "index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "dynamodb:Put*",
+                "dynamodb:Create*",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PartiQLInsert",
+                "dynamodb:Get*",
+                "dynamodb:BatchGetItem",
+                "dynamodb:List*",
+                "dynamodb:Describe*",
+                "dynamodb:Scan",
+                "dynamodb:Query",
+                "dynamodb:PartiQLSelect",
+                "dynamodb:Update*",
+                "dynamodb:RestoreTable*",
+                "dynamodb:PartiQLUpdate",
+                "dynamodb:Delete*",
+                "dynamodb:PartiQLDelete"
+              ],
+              "Resource": [
+                {
+                  "Ref": "storageCommunityReportsArn"
+                },
+                {
+                  "Fn::Join": [
+                    "/",
+                    [
+                      {
+                        "Ref": "storageCommunityReportsArn"
+                      },
+                      "index/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "Name": {
+      "Value": {
+        "Ref": "LambdaFunction"
+      }
+    },
+    "Arn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "LambdaFunction",
+          "Arn"
+        ]
+      }
+    },
+    "Region": {
+      "Value": {
+        "Ref": "AWS::Region"
+      }
+    },
+    "LambdaExecutionRole": {
+      "Value": {
+        "Ref": "LambdaExecutionRole"
+      }
+    },
+    "LambdaExecutionRoleArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "LambdaExecutionRole",
+          "Arn"
+        ]
+      }
+    }
+  }
+}

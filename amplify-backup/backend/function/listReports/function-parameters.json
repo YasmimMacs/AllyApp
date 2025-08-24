@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "custom": [
+      {
+        "Action": [
+          "dynamodb:GetItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ],
+        "Resource": [
+          "arn:aws:dynamodb:*:*:table/CommunityReports*"
+        ]
+      }
+    ]
+  },
+  "lambdaLayers": []
+}

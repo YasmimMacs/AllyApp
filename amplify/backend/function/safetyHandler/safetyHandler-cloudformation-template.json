@@ -15,60 +15,6 @@
     },
     "s3Key": {
       "Type": "String"
-    },
-    "storagedynamoc6b731c4Name": {
-      "Type": "String",
-      "Default": "storagedynamoc6b731c4Name"
-    },
-    "storagedynamoc6b731c4Arn": {
-      "Type": "String",
-      "Default": "storagedynamoc6b731c4Arn"
-    },
-    "storagedynamoc6b731c4StreamArn": {
-      "Type": "String",
-      "Default": "storagedynamoc6b731c4StreamArn"
-    },
-    "storageLiveIncidentsName": {
-      "Type": "String",
-      "Default": "storageLiveIncidentsName"
-    },
-    "storageLiveIncidentsArn": {
-      "Type": "String",
-      "Default": "storageLiveIncidentsArn"
-    },
-    "storageLiveIncidentsStreamArn": {
-      "Type": "String",
-      "Default": "storageLiveIncidentsStreamArn"
-    },
-    "storageCommunityReportsName": {
-      "Type": "String",
-      "Default": "storageCommunityReportsName"
-    },
-    "storageCommunityReportsArn": {
-      "Type": "String",
-      "Default": "storageCommunityReportsArn"
-    },
-    "storageCommunityReportsStreamArn": {
-      "Type": "String",
-      "Default": "storageCommunityReportsStreamArn"
-    },
-    "cautionThreshold": {
-      "Type": "String"
-    },
-    "safeThreshold": {
-      "Type": "String"
-    },
-    "tableCountryRisk": {
-      "Type": "String"
-    },
-    "tableLiveIncidents": {
-      "Type": "String"
-    },
-    "tableCommunityReports": {
-      "Type": "String"
-    },
-    "rfsFeedUrl": {
-      "Type": "String"
     }
   },
   "Conditions": {
@@ -123,51 +69,6 @@
             },
             "REGION": {
               "Ref": "AWS::Region"
-            },
-            "STORAGE_DYNAMOC6B731C4_NAME": {
-              "Ref": "storagedynamoc6b731c4Name"
-            },
-            "STORAGE_DYNAMOC6B731C4_ARN": {
-              "Ref": "storagedynamoc6b731c4Arn"
-            },
-            "STORAGE_DYNAMOC6B731C4_STREAMARN": {
-              "Ref": "storagedynamoc6b731c4StreamArn"
-            },
-            "STORAGE_LIVEINCIDENTS_NAME": {
-              "Ref": "storageLiveIncidentsName"
-            },
-            "STORAGE_LIVEINCIDENTS_ARN": {
-              "Ref": "storageLiveIncidentsArn"
-            },
-            "STORAGE_LIVEINCIDENTS_STREAMARN": {
-              "Ref": "storageLiveIncidentsStreamArn"
-            },
-            "STORAGE_COMMUNITYREPORTS_NAME": {
-              "Ref": "storageCommunityReportsName"
-            },
-            "STORAGE_COMMUNITYREPORTS_ARN": {
-              "Ref": "storageCommunityReportsArn"
-            },
-            "STORAGE_COMMUNITYREPORTS_STREAMARN": {
-              "Ref": "storageCommunityReportsStreamArn"
-            },
-            "CAUTION_THRESHOLD": {
-              "Ref": "cautionThreshold"
-            },
-            "SAFE_THRESHOLD": {
-              "Ref": "safeThreshold"
-            },
-            "TABLE_COUNTRY_RISK": {
-              "Ref": "tableCountryRisk"
-            },
-            "TABLE_LIVE_INCIDENTS": {
-              "Ref": "tableLiveIncidents"
-            },
-            "TABLE_COMMUNITY_REPORTS": {
-              "Ref": "tableCommunityReports"
-            },
-            "RFS_FEED_URL": {
-              "Ref": "rfsFeedUrl"
             }
           }
         },
@@ -188,12 +89,12 @@
         "RoleName": {
           "Fn::If": [
             "ShouldNotCreateEnvResources",
-            "allyLambdaRolec291637d",
+            "allyappLambdaRole2ca188c9",
             {
               "Fn::Join": [
                 "",
                 [
-                  "allyLambdaRolec291637d",
+                  "allyappLambdaRole2ca188c9",
                   "-",
                   {
                     "Ref": "env"
@@ -259,136 +160,6 @@
                   }
                 ]
               }
-            }
-          ]
-        }
-      }
-    },
-    "AmplifyResourcesPolicy": {
-      "DependsOn": [
-        "LambdaExecutionRole"
-      ],
-      "Type": "AWS::IAM::Policy",
-      "Properties": {
-        "PolicyName": "amplify-lambda-execution-policy",
-        "Roles": [
-          {
-            "Ref": "LambdaExecutionRole"
-          }
-        ],
-        "PolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Action": [
-                "dynamodb:Put*",
-                "dynamodb:Create*",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PartiQLInsert",
-                "dynamodb:Get*",
-                "dynamodb:BatchGetItem",
-                "dynamodb:List*",
-                "dynamodb:Describe*",
-                "dynamodb:Scan",
-                "dynamodb:Query",
-                "dynamodb:PartiQLSelect",
-                "dynamodb:Update*",
-                "dynamodb:RestoreTable*",
-                "dynamodb:PartiQLUpdate",
-                "dynamodb:Delete*",
-                "dynamodb:PartiQLDelete"
-              ],
-              "Resource": [
-                {
-                  "Ref": "storagedynamoc6b731c4Arn"
-                },
-                {
-                  "Fn::Join": [
-                    "/",
-                    [
-                      {
-                        "Ref": "storagedynamoc6b731c4Arn"
-                      },
-                      "index/*"
-                    ]
-                  ]
-                }
-              ]
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "dynamodb:Put*",
-                "dynamodb:Create*",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PartiQLInsert",
-                "dynamodb:Get*",
-                "dynamodb:BatchGetItem",
-                "dynamodb:List*",
-                "dynamodb:Describe*",
-                "dynamodb:Scan",
-                "dynamodb:Query",
-                "dynamodb:PartiQLSelect",
-                "dynamodb:Update*",
-                "dynamodb:RestoreTable*",
-                "dynamodb:PartiQLUpdate",
-                "dynamodb:Delete*",
-                "dynamodb:PartiQLDelete"
-              ],
-              "Resource": [
-                {
-                  "Ref": "storageLiveIncidentsArn"
-                },
-                {
-                  "Fn::Join": [
-                    "/",
-                    [
-                      {
-                        "Ref": "storageLiveIncidentsArn"
-                      },
-                      "index/*"
-                    ]
-                  ]
-                }
-              ]
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "dynamodb:Put*",
-                "dynamodb:Create*",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PartiQLInsert",
-                "dynamodb:Get*",
-                "dynamodb:BatchGetItem",
-                "dynamodb:List*",
-                "dynamodb:Describe*",
-                "dynamodb:Scan",
-                "dynamodb:Query",
-                "dynamodb:PartiQLSelect",
-                "dynamodb:Update*",
-                "dynamodb:RestoreTable*",
-                "dynamodb:PartiQLUpdate",
-                "dynamodb:Delete*",
-                "dynamodb:PartiQLDelete"
-              ],
-              "Resource": [
-                {
-                  "Ref": "storageCommunityReportsArn"
-                },
-                {
-                  "Fn::Join": [
-                    "/",
-                    [
-                      {
-                        "Ref": "storageCommunityReportsArn"
-                      },
-                      "index/*"
-                    ]
-                  ]
-                }
-              ]
             }
           ]
         }

@@ -1,60 +1,36 @@
 {
   "dev": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-ally-dev-96be4-authRole",
-      "UnauthRoleArn": "arn:aws:iam::889174276273:role/amplify-ally-dev-96be4-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::889174276273:role/amplify-ally-dev-96be4-authRole",
+      "AuthRoleName": "amplify-allyapp-dev-97e56-authRole",
+      "UnauthRoleArn": "arn:aws:iam::889174276273:role/amplify-allyapp-dev-97e56-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::889174276273:role/amplify-allyapp-dev-97e56-authRole",
       "Region": "ap-southeast-2",
-      "DeploymentBucketName": "amplify-ally-dev-96be4-deployment",
-      "UnauthRoleName": "amplify-ally-dev-96be4-unauthRole",
-      "StackName": "amplify-ally-dev-96be4",
-      "StackId": "arn:aws:cloudformation:ap-southeast-2:889174276273:stack/amplify-ally-dev-96be4/bfc4d450-6c70-11f0-90f5-06db4cb685a7",
-      "AmplifyAppId": "d2psm6s8jg6yu7"
+      "DeploymentBucketName": "amplify-allyapp-dev-97e56-deployment",
+      "UnauthRoleName": "amplify-allyapp-dev-97e56-unauthRole",
+      "StackName": "amplify-allyapp-dev-97e56",
+      "StackId": "arn:aws:cloudformation:ap-southeast-2:889174276273:stack/amplify-allyapp-dev-97e56/a70559e0-80bf-11f0-9cb9-0a9b82ad81e7",
+      "AmplifyAppId": "d1yho2g7njev1o"
     },
     "categories": {
-      "auth": {
-        "allyab79b52b": {}
-      },
       "function": {
-        "ally845d9ca4": {
-          "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
-          "s3Key": "amplify-builds/ally845d9ca4-2f745830574e2b6c656f-build.zip"
-        },
         "safetyHandler": {
-          "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
-          "s3Key": "amplify-builds/safetyHandler-484c5447536f4c4d7a69-build.zip",
-          "cautionThreshold": "4.0",
-          "safeThreshold": "7.5",
-          "tableCountryRisk": "CountryRisk-dev",
-          "tableLiveIncidents": "LiveIncidents-dev",
-          "tableCommunityReports": "CommunityReports-dev",
-          "rfsFeedUrl": "https://www.rfs.nsw.gov.au/feeds/majorIncidents.xml"
+          "deploymentBucketName": "amplify-allyapp-dev-97e56-deployment",
+          "s3Key": "amplify-builds/safetyHandler-48794c31704850637a6d-build.zip"
         },
         "createReports": {
-          "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
-          "s3Key": "amplify-builds/createReports-336648746f7567565267-build.zip"
+          "deploymentBucketName": "amplify-allyapp-dev-97e56-deployment",
+          "s3Key": "amplify-builds/createReports-4d704868374661355133-build.zip"
         },
-        "listReports": {
-          "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
-          "s3Key": "amplify-builds/listReports-57654c46743259787763-build.zip"
-        },
-        "seedCountryRisk": {
-          "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
-          "s3Key": "amplify-builds/seedCountryRisk-365a654b347757652b5a-build.zip"
-        },
-        "ingestNSWRFS": {
-          "deploymentBucketName": "amplify-ally-dev-96be4-deployment",
-          "s3Key": "amplify-builds/ingestNSWRFS-516d504d6f50627a307a-build.zip"
+        "ListReports": {
+          "deploymentBucketName": "amplify-allyapp-dev-97e56-deployment",
+          "s3Key": "amplify-builds/ListReports-395069486c78677a302b-build.zip"
         }
       },
       "api": {
         "allyapi": {}
       },
-      "storage": {
-        "Safety2025": {},
-        "dynamoc6b731c4": {},
-        "LiveIncidents": {},
-        "CommunityReports": {}
+      "auth": {
+        "allyapp53d833a9": {}
       }
     }
   }

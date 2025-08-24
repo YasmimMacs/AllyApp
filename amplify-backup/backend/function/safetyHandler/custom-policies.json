@@ -1,0 +1,14 @@
+[
+  {
+    "Action": [
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+      "dynamodb:Scan"
+    ],
+    "Resource": [
+      "arn:aws:dynamodb:*:*:table/CountryRisk*",
+      "arn:aws:dynamodb:*:*:table/LiveIncidents*",
+      "arn:aws:dynamodb:*:*:table/CommunityReports*"
+    ]
+  }
+]
