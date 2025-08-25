@@ -1,4 +1,3 @@
-
 {
   "expo": {
     "name": "ReactNativeApp",
@@ -53,8 +52,12 @@
     "plugins": [
       "expo-location",
       "expo-image-picker",
+      ["expo-file-system"],
       [
-        "expo-file-system"
+        "expo-maps",
+        {
+          "googleMapsApiKey": "AIzaSyA6cvNcBRbFGqhQJiHpOQDbfP9YB6j9TWM"
+        }
       ]
     ]
   }

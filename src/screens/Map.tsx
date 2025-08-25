@@ -1,5 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import MapView, { PROVIDER_GOOGLE, Marker, Callout, Region } from "react-native-maps";
+import MapView, {
+  PROVIDER_GOOGLE,
+  Marker,
+  Callout,
+  Region,
+} from "react-native-maps";
 import {
   View,
   Text,
@@ -25,13 +30,14 @@ import {
   watchPositionAsync,
   LocationAccuracy,
   LocationObject,
-  LocationObjectCoords
+  LocationObjectCoords,
 } from "expo-location";
 import { useLocationPermission } from "../hooks/useLocationPermission";
 import { LocationPermissionBanner } from "../components/LocationPermissionBanner";
 import { useReverseGeocode } from "../hooks/useReverseGeocode";
 import { Toast } from "../components/Toast";
-import * as Location from 'expo-location';
+import * as Location from "expo-location";
+import { getMapProvider, getMapProviderName } from "../utils/mapProvider";
 
 type MapScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -74,39 +80,54 @@ export default function MapScreen() {
   const navigation = useNavigation<MapScreenNavigationProp>();
   const mapRef = useRef<MapView>(null);
 
-  const { status: permissionStatus, requestPermission, openSettings, isLoading: isPermissionLoading } = useLocationPermission();
-  
+  const {
+    status: permissionStatus,
+    requestPermission,
+    openSettings,
+    isLoading: isPermissionLoading,
+  } = useLocationPermission();
+
   // New optimized reverse geocoding hook
-  const { address: currentAddress, loading: isAddressLoading, error: addressError, fetchFor: fetchAddress } = useReverseGeocode(50);
+  const {
+    address: currentAddress,
+    loading: isAddressLoading,
+    error: addressError,
+    fetchFor: fetchAddress,
+  } = useReverseGeocode(50);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedZone, setSelectedZone] = useState<SafetyZone | null>(null);
   const [showZoneDetails, setShowZoneDetails] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
-  const [currentCoords, setCurrentCoords] = useState<LocationObjectCoords | null>(null);
+  const [currentCoords, setCurrentCoords] =
+    useState<LocationObjectCoords | null>(null);
   const [locationSubscription, setLocationSubscription] = useState<any>(null);
   const [mapRegion, setMapRegion] = useState<Region>({
-    latitude: -33.8280, // Default to Sydney coordinates
+    latitude: -33.828, // Default to Sydney coordinates
     longitude: 151.2153,
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   });
-  
+
   // Search functionality state
   const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<Array<{
-    id: string;
-    name: string;
-    address: string;
-    coordinates: { latitude: number; longitude: number };
-  }>>([]);
+  const [searchResults, setSearchResults] = useState<
+    Array<{
+      id: string;
+      name: string;
+      address: string;
+      coordinates: { latitude: number; longitude: number };
+    }>
+  >([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  
+
   // Toast state for showing geocoding errors
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<'error' | 'warning' | 'success' | 'info'>('error');
+  const [toastType, setToastType] = useState<
+    "error" | "warning" | "success" | "info"
+  >("error");
 
   const filters = ["All", "Lighting", "Crowd Level", "Reports", "Safe Places"];
 
@@ -202,14 +223,18 @@ export default function MapScreen() {
 
   // Get current position when permission is granted
   useEffect(() => {
-    if (permissionStatus === 'granted' && !currentCoords) {
+    console.log("Permission status:", permissionStatus);
+    console.log("Current coords:", currentCoords);
+
+    if (permissionStatus === "granted" && !currentCoords) {
+      console.log("Getting current position...");
       getCurrentPosition();
     }
   }, [permissionStatus, currentCoords]);
 
   // Start location tracking when permission is granted and we have initial position
   useEffect(() => {
-    if (permissionStatus === 'granted' && currentCoords) {
+    if (permissionStatus === "granted" && currentCoords) {
       startLocationTracking();
     }
   }, [permissionStatus, currentCoords]);
@@ -218,7 +243,7 @@ export default function MapScreen() {
   useEffect(() => {
     if (addressError) {
       setToastMessage(`Geocoding error: ${addressError}`);
-      setToastType('error');
+      setToastType("error");
       setShowToast(true);
     }
   }, [addressError]);
@@ -226,19 +251,19 @@ export default function MapScreen() {
   const getCurrentPosition = async () => {
     try {
       setIsLoadingLocation(true);
-      console.log('Getting current position...');
-      
+      console.log("Getting current position...");
+
       const location = await getCurrentPositionAsync({
         accuracy: LocationAccuracy.High,
       });
-      
-      console.log('Current position obtained:', location.coords);
+
+      console.log("Current position obtained:", location.coords);
       const newCoords = location.coords;
       setCurrentCoords(newCoords);
-      
+
       // Use new hook to get address
       await fetchAddress(newCoords.latitude, newCoords.longitude);
-      
+
       // Update map region to center on user's location
       const newRegion = {
         latitude: newCoords.latitude,
@@ -247,24 +272,27 @@ export default function MapScreen() {
         longitudeDelta: 0.01,
       };
       setMapRegion(newRegion);
-      
+
       // Animate map to user's location
       if (mapRef.current) {
-        console.log('Animating map to user location...');
+        console.log("Animating map to user location...");
         mapRef.current.animateToRegion(newRegion, 1000);
       }
-      
+
       setIsLoadingLocation(false);
     } catch (error) {
-      console.error('Error getting current position:', error);
+      console.error("Error getting current position:", error);
       setIsLoadingLocation(false);
-      Alert.alert('Location Error', 'Failed to get your current location. Please try again.');
+      Alert.alert(
+        "Location Error",
+        "Failed to get your current location. Please try again."
+      );
     }
   };
 
   const startLocationTracking = () => {
-    console.log('Starting location tracking...');
-    
+    console.log("Starting location tracking...");
+
     try {
       const subscription = watchPositionAsync(
         {
@@ -273,13 +301,13 @@ export default function MapScreen() {
           distanceInterval: 50, // 50 meters - matches our hook threshold
         },
         (location: LocationObject) => {
-          console.log('Location update received:', location.coords);
+          console.log("Location update received:", location.coords);
           const newCoords = location.coords;
           setCurrentCoords(newCoords);
-          
+
           // Use new hook to get address only when position changes significantly
           fetchAddress(newCoords.latitude, newCoords.longitude);
-          
+
           // Update map region to center on user's location
           const newRegion = {
             latitude: newCoords.latitude,
@@ -289,21 +317,26 @@ export default function MapScreen() {
           };
           setMapRegion(newRegion);
         }
-      ).then(sub => {
-        console.log('Location subscription created successfully');
-        setLocationSubscription(sub);
-      }).catch(error => {
-        console.error("Location tracking error:", error);
-        Alert.alert('Location Error', 'Failed to start location tracking. Please check your location settings.');
-      });
+      )
+        .then((sub) => {
+          console.log("Location subscription created successfully");
+          setLocationSubscription(sub);
+        })
+        .catch((error) => {
+          console.error("Location tracking error:", error);
+          Alert.alert(
+            "Location Error",
+            "Failed to start location tracking. Please check your location settings."
+          );
+        });
     } catch (error) {
-      console.error('Error in startLocationTracking:', error);
+      console.error("Error in startLocationTracking:", error);
     }
   };
 
   // Handle map region change completion (when user stops panning/zooming)
   const handleRegionChangeComplete = (region: Region) => {
-    console.log('Map region change complete:', region);
+    console.log("Map region change complete:", region);
     // Only fetch address when user finishes moving the map
     fetchAddress(region.latitude, region.longitude);
   };
@@ -337,7 +370,7 @@ export default function MapScreen() {
   const handleZonePress = (zone: SafetyZone) => {
     setSelectedZone(zone);
     setShowZoneDetails(true);
-    
+
     // Update map region to center on the selected zone
     const newRegion = {
       latitude: zone.coordinates.latitude,
@@ -346,7 +379,7 @@ export default function MapScreen() {
       longitudeDelta: 0.01,
     };
     setMapRegion(newRegion);
-    
+
     // Animate map to the selected zone
     if (mapRef.current) {
       mapRef.current.animateToRegion(newRegion, 1000);
@@ -371,24 +404,29 @@ export default function MapScreen() {
     // If a zone is selected, show its detailed status
     if (selectedZone) {
       return {
-        status: `${selectedZone.name}: ${selectedZone.type.toUpperCase()} Area (Score: ${selectedZone.safetyScore}/10)`,
+        status: `${
+          selectedZone.name
+        }: ${selectedZone.type.toUpperCase()} Area (Score: ${
+          selectedZone.safetyScore
+        }/10)`,
         color: getZoneColor(selectedZone.type),
         icon: getZoneIcon(selectedZone.type),
-        zone: selectedZone
+        zone: selectedZone,
       };
     }
-    
+
     // Otherwise, show status based on current location
-    if (!currentCoords) return { status: "Unknown", color: "#6B7280", icon: "help-circle" };
-    
+    if (!currentCoords)
+      return { status: "Unknown", color: "#6B7280", icon: "help-circle" };
+
     // Find the closest safety zone
     let closestZone = safetyZones[0];
     let minDistance = Number.MAX_VALUE;
-    
-    safetyZones.forEach(zone => {
+
+    safetyZones.forEach((zone) => {
       const distance = Math.sqrt(
         Math.pow(zone.coordinates.latitude - currentCoords.latitude, 2) +
-        Math.pow(zone.coordinates.longitude - currentCoords.longitude, 2)
+          Math.pow(zone.coordinates.longitude - currentCoords.longitude, 2)
       );
       if (distance < minDistance) {
         minDistance = distance;
@@ -400,7 +438,7 @@ export default function MapScreen() {
       status: `You are in a ${closestZone.type} area (${closestZone.name})`,
       color: getZoneColor(closestZone.type),
       icon: getZoneIcon(closestZone.type),
-      zone: closestZone
+      zone: closestZone,
     };
   };
 
@@ -430,7 +468,7 @@ export default function MapScreen() {
     try {
       // Use reverse geocoding to search for locations
       const results = await Location.geocodeAsync(query);
-      
+
       if (results.length > 0) {
         // Get address details for each result
         const detailedResults = await Promise.all(
@@ -440,19 +478,21 @@ export default function MapScreen() {
                 latitude: result.latitude,
                 longitude: result.longitude,
               });
-              
+
               const address = addresses[0];
               const addressString = [
                 address?.street,
                 address?.city,
                 address?.region,
-                address?.country
-              ].filter(Boolean).join(', ');
+                address?.country,
+              ]
+                .filter(Boolean)
+                .join(", ");
 
               return {
                 id: `search-${index}`,
                 name: query,
-                address: addressString || 'Unknown address',
+                address: addressString || "Unknown address",
                 coordinates: {
                   latitude: result.latitude,
                   longitude: result.longitude,
@@ -462,23 +502,22 @@ export default function MapScreen() {
               return {
                 id: `search-${index}`,
                 name: query,
-                address: 'Unknown address',
+                address: "Unknown address",
                 coordinates: {
                   latitude: result.latitude,
                   longitude: result.longitude,
                 },
               };
-              }
             }
-          )
+          })
         );
-        
+
         return detailedResults;
       }
-      
+
       return [];
     } catch (error) {
-      console.error('Geocoding error:', error);
+      console.error("Geocoding error:", error);
       throw error;
     }
   };
@@ -491,23 +530,23 @@ export default function MapScreen() {
       latitudeDelta: 0.01,
       longitudeDelta: 0.01,
     };
-    
+
     setMapRegion(newRegion);
     mapRef.current?.animateToRegion(newRegion, 1000);
-    
+
     // Clear search
-    setSearchQuery('');
+    setSearchQuery("");
     setShowSearchResults(false);
     setSearchResults([]);
-    
+
     // Show success toast
     setToastMessage(`Navigated to ${result.name}`);
-    setToastType('success');
+    setToastType("success");
     setShowToast(true);
   };
 
   const clearSearch = () => {
-    setSearchQuery('');
+    setSearchQuery("");
     setSearchResults([]);
     setShowSearchResults(false);
   };
@@ -515,7 +554,7 @@ export default function MapScreen() {
   const clearZoneSelection = () => {
     setSelectedZone(null);
     setShowZoneDetails(false);
-    
+
     // Return map to user's current location if available
     if (currentCoords && mapRef.current) {
       const newRegion = {
@@ -531,10 +570,11 @@ export default function MapScreen() {
 
   const safetyStatus = getCurrentSafetyStatus();
 
-  const filteredSafetyZones = safetyZones.filter(zone => {
+  const filteredSafetyZones = safetyZones.filter((zone) => {
     if (selectedFilter === "All") return true;
     if (selectedFilter === "Lighting") return zone.lighting === "Excellent";
-    if (selectedFilter === "Crowd Level") return zone.lighting === "Moderate" || zone.lighting === "High";
+    if (selectedFilter === "Crowd Level")
+      return zone.lighting === "Moderate" || zone.lighting === "High";
     if (selectedFilter === "Reports") return zone.recentReports.length > 0;
     if (selectedFilter === "Safe Places") return zone.type === "safe";
     return true;
@@ -544,7 +584,7 @@ export default function MapScreen() {
   useEffect(() => {
     return () => {
       if (locationSubscription) {
-        console.log('Cleaning up location subscription...');
+        console.log("Cleaning up location subscription...");
         locationSubscription.remove();
       }
     };
@@ -583,12 +623,10 @@ export default function MapScreen() {
             <Ionicons name="location" size={20} color="#6426A9" />
             <View style={styles.addressContainer}>
               <Text style={styles.locationStatusText}>
-                {isAddressLoading ? 'Getting address...' : currentAddress}
+                {isAddressLoading ? "Getting address..." : currentAddress}
               </Text>
               {addressError && (
-                <Text style={styles.addressErrorText}>
-                  {addressError}
-                </Text>
+                <Text style={styles.addressErrorText}>{addressError}</Text>
               )}
             </View>
           </View>
@@ -623,12 +661,15 @@ export default function MapScreen() {
               returnKeyType="search"
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+              <TouchableOpacity
+                onPress={clearSearch}
+                style={styles.clearButton}
+              >
                 <Ionicons name="close-circle" size={20} color="#9CA3AF" />
               </TouchableOpacity>
             )}
           </View>
-          
+
           {/* Search Results */}
           {showSearchResults && searchResults.length > 0 && (
             <View style={styles.searchResultsContainer}>
@@ -643,9 +684,15 @@ export default function MapScreen() {
                     <Ionicons name="location" size={16} color="#6426A9" />
                     <View style={styles.searchResultContent}>
                       <Text style={styles.searchResultName}>{item.name}</Text>
-                      <Text style={styles.searchResultAddress}>{item.address}</Text>
+                      <Text style={styles.searchResultAddress}>
+                        {item.address}
+                      </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color="#9CA3AF"
+                    />
                   </TouchableOpacity>
                 )}
                 style={styles.searchResultsList}
@@ -653,7 +700,7 @@ export default function MapScreen() {
               />
             </View>
           )}
-          
+
           {/* Loading indicator for search */}
           {isSearching && (
             <View style={styles.searchLoadingContainer}>
@@ -707,18 +754,22 @@ export default function MapScreen() {
 
       {/* Map Container - Dedicated container with flex:1 */}
       <View style={styles.mapContainer}>
-        {isLoadingLocation || permissionStatus !== 'granted' ? (
+        {isLoadingLocation || permissionStatus !== "granted" ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#6426A9" />
             <Text style={styles.loadingText}>
-              {permissionStatus !== 'granted' 
-                ? 'Location permission required' 
-                : 'Getting your location...'
-              }
+              {permissionStatus !== "granted"
+                ? "Location permission required"
+                : "Getting your location..."}
             </Text>
           </View>
         ) : (
           <>
+            {/* Map Provider Status */}
+            <View style={styles.mapProviderStatus}>
+              <Text style={styles.mapProviderText}>Using: Google Maps</Text>
+            </View>
+
             <MapView
               ref={mapRef}
               style={styles.map}
@@ -734,9 +785,11 @@ export default function MapScreen() {
               onRegionChange={setMapRegion}
               onRegionChangeComplete={handleRegionChangeComplete}
               onMapReady={() => {
-                console.log('Map is ready!');
-                console.log('Map dimensions:', { flex: 1 });
-                console.log('Initial region:', mapRegion);
+                console.log("Map is ready!");
+                console.log("Map dimensions:", { flex: 1 });
+                console.log("Initial region:", mapRegion);
+                console.log("Platform:", Platform.OS);
+                console.log("Provider:", getMapProviderName());
 
                 // Center map on user location when ready
                 if (currentCoords && mapRef.current) {
@@ -749,7 +802,7 @@ export default function MapScreen() {
                   mapRef.current.animateToRegion(newRegion, 1000);
                 }
               }}
-              onLayout={() => console.log('Map layout completed')}
+              onLayout={() => console.log("Map layout completed")}
             >
               {/* Safety Zone Markers */}
               {filteredSafetyZones.map((zone) => (
@@ -760,7 +813,9 @@ export default function MapScreen() {
                   description={`Safety Score: ${zone.safetyScore}/10`}
                   onPress={() => handleZonePress(zone)}
                   pinColor={getZoneColor(zone.type)}
-                  opacity={selectedZone && selectedZone.id === zone.id ? 1 : 0.8}
+                  opacity={
+                    selectedZone && selectedZone.id === zone.id ? 1 : 0.8
+                  }
                 >
                   <Callout>
                     <View style={styles.calloutContainer}>
@@ -769,13 +824,18 @@ export default function MapScreen() {
                         Safety Score: {zone.safetyScore}/10
                       </Text>
                       <Text style={styles.calloutType}>
-                        {zone.type.charAt(0).toUpperCase() + zone.type.slice(1)} Area
+                        {zone.type.charAt(0).toUpperCase() + zone.type.slice(1)}{" "}
+                        Area
                       </Text>
-                      
+
                       {/* Show selection indicator */}
                       {selectedZone && selectedZone.id === zone.id && (
                         <View style={styles.selectedZoneIndicator}>
-                          <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={16}
+                            color="#10B981"
+                          />
                           <Text style={styles.selectedZoneText}>Selected</Text>
                         </View>
                       )}
@@ -818,12 +878,16 @@ export default function MapScreen() {
               <View style={styles.mapErrorOverlay}>
                 <View style={styles.mapErrorContent}>
                   <Ionicons name="warning" size={32} color="#EF4444" />
-                  <Text style={styles.mapErrorText}>
-                    {addressError}
-                  </Text>
+                  <Text style={styles.mapErrorText}>{addressError}</Text>
                   <TouchableOpacity
                     style={styles.mapErrorButton}
-                    onPress={() => currentCoords && fetchAddress(currentCoords.latitude, currentCoords.longitude)}
+                    onPress={() =>
+                      currentCoords &&
+                      fetchAddress(
+                        currentCoords.latitude,
+                        currentCoords.longitude
+                      )
+                    }
                   >
                     <Text style={styles.mapErrorButtonText}>Retry</Text>
                   </TouchableOpacity>
@@ -840,19 +904,35 @@ export default function MapScreen() {
       </View>
 
       {/* Status Bar - Fixed below map */}
-      <View style={[styles.statusBar, { backgroundColor: safetyStatus.color + "20", borderColor: safetyStatus.color }]}>
-        <Ionicons name={safetyStatus.icon as any} size={20} color={safetyStatus.color} />
+      <View
+        style={[
+          styles.statusBar,
+          {
+            backgroundColor: safetyStatus.color + "20",
+            borderColor: safetyStatus.color,
+          },
+        ]}
+      >
+        <Ionicons
+          name={safetyStatus.icon as any}
+          size={20}
+          color={safetyStatus.color}
+        />
         <Text style={[styles.statusText, { color: safetyStatus.color }]}>
           {safetyStatus.status}
         </Text>
-        
+
         {/* Show selected zone indicator */}
         {selectedZone && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.clearSelectionButton}
             onPress={clearZoneSelection}
           >
-            <Ionicons name="close-circle" size={16} color={safetyStatus.color} />
+            <Ionicons
+              name="close-circle"
+              size={16}
+              color={safetyStatus.color}
+            />
           </TouchableOpacity>
         )}
       </View>
@@ -869,9 +949,7 @@ export default function MapScreen() {
             {selectedZone && (
               <>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>
-                    {selectedZone.name}
-                  </Text>
+                  <Text style={styles.modalTitle}>{selectedZone.name}</Text>
                   <TouchableOpacity
                     style={styles.closeButton}
                     onPress={() => setShowZoneDetails(false)}
@@ -888,11 +966,12 @@ export default function MapScreen() {
                       style={[
                         styles.safetyScoreValue,
                         {
-                          color: selectedZone.safetyScore >= 7.5
-                            ? "#10B981"
-                            : selectedZone.safetyScore >= 4.0
-                            ? "#F59E0B"
-                            : "#EF4444",
+                          color:
+                            selectedZone.safetyScore >= 7.5
+                              ? "#10B981"
+                              : selectedZone.safetyScore >= 4.0
+                              ? "#F59E0B"
+                              : "#EF4444",
                         },
                       ]}
                     >
@@ -904,7 +983,9 @@ export default function MapScreen() {
                   <View style={styles.statsContainer}>
                     <View style={styles.statItem}>
                       <Text style={styles.statLabel}>Coverage</Text>
-                      <Text style={styles.statValue}>{selectedZone.lighting}</Text>
+                      <Text style={styles.statValue}>
+                        {selectedZone.lighting}
+                      </Text>
                     </View>
                     <View style={styles.statItem}>
                       <Text style={styles.statLabel}>Confidence</Text>
@@ -915,19 +996,22 @@ export default function MapScreen() {
                   </View>
 
                   {/* Community Info */}
-                  {selectedZone.recentReports && selectedZone.recentReports.length > 0 && (
-                    <View style={styles.reportsContainer}>
-                      <Text style={styles.reportsTitle}>Community Assessment</Text>
-                      {selectedZone.recentReports.map((report, index) => (
-                        <View key={index} style={styles.reportItem}>
-                          <Text style={styles.reportText}>{report.text}</Text>
-                          <Text style={styles.reportMeta}>
-                            {report.user} • {report.time}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
+                  {selectedZone.recentReports &&
+                    selectedZone.recentReports.length > 0 && (
+                      <View style={styles.reportsContainer}>
+                        <Text style={styles.reportsTitle}>
+                          Community Assessment
+                        </Text>
+                        {selectedZone.recentReports.map((report, index) => (
+                          <View key={index} style={styles.reportItem}>
+                            <Text style={styles.reportText}>{report.text}</Text>
+                            <Text style={styles.reportMeta}>
+                              {report.user} • {report.time}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
 
                   {/* Incidents */}
                   {/* Incidents are not part of the static safetyZones, so they are not displayed here */}
@@ -939,9 +1023,7 @@ export default function MapScreen() {
                       {selectedZone.tips.map((tip, index) => (
                         <View key={index} style={styles.tipItem}>
                           <Text style={styles.tipBullet}>•</Text>
-                          <Text style={styles.tipText}>
-                            {tip}
-                          </Text>
+                          <Text style={styles.tipText}>{tip}</Text>
                         </View>
                       ))}
                     </View>
@@ -957,7 +1039,9 @@ export default function MapScreen() {
                     style={styles.actionButtonOutline}
                     onPress={handleReportIssue}
                   >
-                    <Text style={styles.actionButtonOutlineText}>Report Issue</Text>
+                    <Text style={styles.actionButtonOutlineText}>
+                      Report Issue
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.actionButton}
@@ -979,7 +1063,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8FAFC",
-           paddingBottom: Platform.OS === 'android' ? 44 : 85,
+    paddingBottom: Platform.OS === "android" ? 44 : 85,
   },
   header: {
     flexDirection: "row",
@@ -1061,14 +1145,14 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   searchResultsContainer: {
-    position: 'absolute',
-    top: '100%',
+    position: "absolute",
+    top: "100%",
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     marginTop: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -1080,12 +1164,12 @@ const styles = StyleSheet.create({
     maxHeight: 300,
   },
   searchResultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: "#F3F4F6",
   },
   searchResultContent: {
     flex: 1,
@@ -1093,24 +1177,24 @@ const styles = StyleSheet.create({
   },
   searchResultName: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#1F2937',
+    fontWeight: "500",
+    color: "#1F2937",
     marginBottom: 2,
   },
   searchResultAddress: {
     fontSize: 14,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   searchLoadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 12,
     paddingHorizontal: 20,
   },
   searchLoadingText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: "#6B7280",
     marginLeft: 8,
   },
   filterContainer: {
@@ -1403,95 +1487,110 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   noDataMessage: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
+    position: "absolute",
+    top: "50%",
+    left: "50%",
     transform: [{ translateX: -100 }, { translateY: -10 }],
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    alignItems: 'center',
+    borderColor: "#E0E0E0",
+    alignItems: "center",
     zIndex: 1,
   },
   noDataText: {
     fontSize: moderateScale(14),
-    color: '#6B7280',
-    textAlign: 'center',
+    color: "#6B7280",
+    textAlign: "center",
   },
   mapLoadingOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 10,
   },
   mapLoadingContent: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   mapLoadingText: {
     marginTop: 10,
     fontSize: moderateScale(16),
-    color: '#6426A9',
+    color: "#6426A9",
   },
   mapErrorOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 10,
   },
   mapErrorContent: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   mapErrorText: {
     marginTop: 10,
     fontSize: moderateScale(16),
-    color: '#EF4444',
-    textAlign: 'center',
+    color: "#EF4444",
+    textAlign: "center",
   },
   mapErrorButton: {
     marginTop: 20,
-    backgroundColor: '#6426A9',
+    backgroundColor: "#6426A9",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
   },
   mapErrorButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: moderateScale(16),
-    fontWeight: '500',
+    fontWeight: "500",
   },
   clearSelectionButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     right: 0,
     padding: 8,
     zIndex: 10,
   },
   selectedZoneIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 8,
-    backgroundColor: '#E0F2F7',
+    backgroundColor: "#E0F2F7",
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 6,
   },
   selectedZoneText: {
     fontSize: moderateScale(12),
-    color: '#10B981',
+    color: "#10B981",
     marginLeft: 4,
+  },
+  mapProviderStatus: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    zIndex: 5,
+  },
+  mapProviderText: {
+    fontSize: moderateScale(10),
+    color: "#6426A9",
+    fontWeight: "500",
   },
 });
