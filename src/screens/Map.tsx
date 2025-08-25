@@ -979,6 +979,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8FAFC",
+           paddingBottom: Platform.OS === 'android' ? 44 : 85,
   },
   header: {
     flexDirection: "row",
@@ -989,8 +990,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
   },
   headerTitle: {
-    fontSize: moderateScale(20),
-    fontWeight: "600",
+    fontSize: isTablet ? 32 : 28,
+    fontWeight: "700",
     color: "#6426A9",
     flex: 1,
     textAlign: "center",

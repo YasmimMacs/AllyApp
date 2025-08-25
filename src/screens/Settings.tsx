@@ -85,6 +85,11 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleGoToHome = () => {
+    setShowLogout(false);
+    navigation.navigate('Home');
+  };
+
   const handleLogout = () => {
     setShowLogout(false);
     navigation.navigate('Auth');
@@ -201,13 +206,9 @@ export default function SettingsScreen() {
                 </View>
               </Pressable>
               
-              <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>Sarah Johnson</Text>
-                <Text style={styles.profileEmail}>sarah.johnson@email.com</Text>
-                <Pressable style={styles.editProfileButton}>
-                  <Text style={styles.editProfileText}>Edit Profile</Text>
-                </Pressable>
-              </View>
+                                            <View style={styles.profileInfo}>
+                 <Text style={styles.profileName}>Yasmim Borges</Text>
+               </View>
             </View>
           </View>
 
@@ -349,16 +350,19 @@ export default function SettingsScreen() {
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
               <View style={styles.logoutBox}>
-                <Text style={styles.logoutTitle}>Sign Out</Text>
-                <Text style={styles.logoutMessage}>Are you sure you want to sign out?</Text>
-                <View style={styles.logoutButtons}>
-                  <Pressable style={styles.cancelButton} onPress={() => setShowLogout(false)}>
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                  </Pressable>
-                  <Pressable style={styles.confirmLogoutButton} onPress={handleLogout}>
-                    <Text style={styles.confirmLogoutButtonText}>Sign Out</Text>
-                  </Pressable>
-                </View>
+                                 <Text style={styles.logoutTitle}>Choose Option</Text>
+                 <Text style={styles.logoutMessage}>What would you like to do?</Text>
+                 <View style={styles.logoutButtons}>
+                   <Pressable style={styles.cancelButton} onPress={() => setShowLogout(false)}>
+                     <Text style={styles.cancelButtonText}>Cancel</Text>
+                   </Pressable>
+                   <Pressable style={styles.goToHomeButton} onPress={handleGoToHome}>
+                     <Text style={styles.goToHomeButtonText}>Go to Home</Text>
+                   </Pressable>
+                   <Pressable style={styles.confirmLogoutButton} onPress={handleLogout}>
+                     <Text style={styles.confirmLogoutButtonText}>Log Out</Text>
+                   </Pressable>
+                 </View>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -372,9 +376,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+    paddingBottom: Platform.OS === 'android' ? 44 : 85,
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: Platform.OS === 'android' ? 44 : 85,
   },
   content: {
     paddingHorizontal: isTablet ? 24 : 16,
@@ -385,9 +391,10 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   headerTitle: {
-    fontSize: isTablet ? 24 : 20,
-    fontWeight: '600',
+    fontSize: isTablet ? 32 : 28,
+    fontWeight: '700',
     color: '#6426A9',
+    textAlign: 'center',
   },
   section: {
     marginBottom: 32,
@@ -419,6 +426,8 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     borderWidth: 3,
     borderColor: '#6426A9',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cameraIcon: {
     position: 'absolute',
@@ -581,6 +590,7 @@ const styles = StyleSheet.create({
   logoutButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 8,
   },
   cancelButton: {
     flex: 1,
@@ -589,10 +599,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#D1D5DB',
-    marginRight: 8,
   },
   cancelButtonText: {
     color: '#6B7280',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  goToHomeButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#6426A9',
+  },
+  goToHomeButtonText: {
+    color: '#fff',
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -602,7 +623,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     backgroundColor: '#DC2626',
-    marginLeft: 8,
   },
   confirmLogoutButtonText: {
     color: '#fff',

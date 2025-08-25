@@ -1,6 +1,6 @@
 // src/navigation/RootNavigator.tsx
 import React from "react";
-import { Dimensions, TouchableOpacity } from "react-native";
+import { Dimensions, TouchableOpacity, Platform, StatusBar, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -47,51 +47,59 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 // Main Tab Navigator
 function MainTabNavigator() {
   return (
-    <Tab.Navigator
+    <View style={{ 
+      flex: 1, 
+      paddingBottom: Platform.OS === 'android' ? 72 : 0 
+    }}>
+      <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap;
+                 tabBarIcon: ({ focused, color, size }) => {
+           let iconName: keyof typeof Ionicons.glyphMap;
 
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Map') {
-            iconName = focused ? 'map' : 'map-outline';
-          } else if (route.name === 'Community') {
-            iconName = focused ? 'people' : 'people-outline';
-          } else if (route.name === 'Buddy') {
-            iconName = focused ? 'person' : 'person-outline';
-          } else if (route.name === 'Toolkit') {
-            iconName = focused ? 'briefcase' : 'briefcase-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
-          } else {
-            iconName = 'help-outline';
-          }
+           if (route.name === 'Home') {
+             iconName = focused ? 'home' : 'home-outline';
+           } else if (route.name === 'Map') {
+             iconName = focused ? 'map' : 'map-outline';
+           } else if (route.name === 'Community') {
+             iconName = focused ? 'people' : 'people-outline';
+           } else if (route.name === 'Buddy') {
+             iconName = focused ? 'person' : 'person-outline';
+           } else if (route.name === 'Toolkit') {
+             iconName = focused ? 'briefcase' : 'briefcase-outline';
+           } else if (route.name === 'Settings') {
+             iconName = focused ? 'settings' : 'settings-outline';
+           } else {
+             iconName = 'help-outline';
+           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
+           return <Ionicons name={iconName} size={size} color={color} />;
+         },
         tabBarActiveTintColor: '#6426A9',
         tabBarInactiveTintColor: '#8B8B8B',
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#E5E5E5',
-          paddingBottom: 8,
-          paddingTop: 4,
-          height: 65,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 8,
+                     borderTopWidth: 0,
+                    paddingBottom: Platform.OS === 'android' ? 6 : 3,
+          paddingTop: 0,
+          height: Platform.OS === 'android' ? 44 : 40,
+          
+          elevation: Platform.OS === 'android' ? 12 : 8,
+          position: 'absolute',
+          bottom: Platform.OS === 'android' ? -20 : 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
         },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
-        },
-        tabBarItemStyle: {
-          paddingHorizontal: 8,
-        },
+                 tabBarLabelStyle: {
+           fontSize: Platform.OS === 'android' ? 10 : 11,
+           fontWeight: '500',
+           marginTop: Platform.OS === 'android' ? -2 : 0,
+         },
+                 tabBarItemStyle: {
+           paddingHorizontal: 8,
+           paddingVertical: Platform.OS === 'android' ? 2 : 0,
+           marginTop: Platform.OS === 'android' ? -4 : 0,
+         },
         headerShown: false,
       })}
     >
@@ -114,9 +122,10 @@ function MainTabNavigator() {
         component={SettingsScreen}
       />
 
-    </Tab.Navigator>
-  );
-}
+          </Tab.Navigator>
+    </View>
+    );
+  }
 
 export default function RootNavigator() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -125,6 +134,15 @@ export default function RootNavigator() {
   if (isLoading) {
     return null; // You can create a proper loading component here
   }
+
+  // Set status bar for Android
+  React.useEffect(() => {
+    if (Platform.OS === 'android') {
+      StatusBar.setTranslucent(false);
+      StatusBar.setBackgroundColor('#FFFFFF');
+      StatusBar.setBarStyle('dark-content');
+    }
+  }, []);
 
   return (
     <Stack.Navigator
@@ -159,8 +177,7 @@ export default function RootNavigator() {
             name="PasswordRecover"
             component={PasswordRecover}
             options={{ 
-              title: "Recover Password",
-              headerShown: true,
+              headerShown: false,
             }}
           />
         </>

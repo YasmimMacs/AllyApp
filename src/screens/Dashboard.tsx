@@ -253,9 +253,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+    paddingBottom: Platform.OS === 'android' ? 44 : 85,
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: Platform.OS === 'android' ? 44 : 85,
   },
   content: {
     paddingHorizontal: isTablet ? 24 : 16,
@@ -264,17 +266,20 @@ const styles = StyleSheet.create({
   welcomeSection: {
     marginBottom: 32,
     paddingTop: 16,
+    alignItems: 'center',
   },
   welcomeText: {
     fontSize: isTablet ? 32 : 28,
     fontWeight: '700',
     color: '#6426A9',
     marginBottom: 8,
+    textAlign: 'center',
   },
   welcomeSubtext: {
     fontSize: isTablet ? 18 : 16,
     color: '#6B7280',
     fontWeight: '500',
+    textAlign: 'center',
   },
   section: {
     marginBottom: 32,

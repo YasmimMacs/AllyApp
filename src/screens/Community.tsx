@@ -434,11 +434,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8FAFC",
+           paddingBottom: Platform.OS === 'android' ? 44 : 85,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     paddingHorizontal: 20,
     paddingTop: 40, // Match Features page padding
     paddingBottom: 16,
@@ -450,10 +451,10 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   headerTitle: {
-    fontSize: moderateScale(20),
-    fontWeight: "600",
+    fontSize: isTablet ? 32 : 28,
+    fontWeight: "700",
     color: "#6426A9",
-    marginLeft: 12,
+    textAlign: "center",
   },
   headerLeft: {
     flexDirection: "row",

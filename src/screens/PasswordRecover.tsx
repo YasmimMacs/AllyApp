@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   StatusBar,
   SafeAreaView,
   ScrollView,
-  Animated,
   Pressable,
   TextInput,
   TouchableOpacity,
@@ -38,7 +37,6 @@ type Nav = NativeStackNavigationProp<RootStackParamList, "PasswordRecover">;
 
 export default function PasswordRecover() {
   const navigation = useNavigation<Nav>();
-  const allyScaleAnim = useRef(new Animated.Value(1)).current;
   
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -64,21 +62,7 @@ export default function PasswordRecover() {
     );
   };
 
-  const handleAllyPressIn = () => {
-    Animated.spring(allyScaleAnim, {
-      toValue: 1.18,
-      useNativeDriver: true,
-      friction: 5,
-    }).start();
-  };
 
-  const handleAllyPressOut = () => {
-    Animated.spring(allyScaleAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-      friction: 5,
-    }).start();
-  };
 
   const handleRequestReset = async () => {
     // Reset errors
@@ -205,28 +189,12 @@ export default function PasswordRecover() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          <Text style={styles.title}>
-            <Pressable
-              onPressIn={handleAllyPressIn}
-              onPressOut={handleAllyPressOut}
-              onHoverIn={handleAllyPressIn}
-              onHoverOut={handleAllyPressOut}
-              style={{ alignSelf: "center" }}
-            >
-              <Animated.Text
-                style={[
-                  styles.allyWordLarge,
-                  { transform: [{ scale: allyScaleAnim }] },
-                ]}
-              >
-                Ally
-              </Animated.Text>
-            </Pressable>
-          </Text>
           
-          <Text style={styles.subtitle}>Recover Your Password</Text>
           
           <View style={styles.form}>
+            {/* Title */}
+            <Text style={styles.formTitle}>Reset Password</Text>
+            
             {/* Email Input */}
             <View style={styles.inputContainer}>
               <TextInput
@@ -367,29 +335,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: isTablet ? 60 : 20,
     paddingVertical: 40,
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "center",
   },
-  title: {
-    textAlign: "center",
-    marginTop: isTablet ? 32 : 24,
-    marginBottom: isTablet ? 32 : 24,
-  },
-  allyWordLarge: {
-    fontSize: isTablet ? 90 : 56,
-    fontWeight: "bold",
-    color: "#6426A9",
-    lineHeight: isTablet ? 100 : 64,
-    letterSpacing: 2,
-    textAlign: "center",
-  },
-  subtitle: {
-    color: "#6426A9",
-    fontSize: isTablet ? 22 : 15,
-    textAlign: "center",
-    marginBottom: isTablet ? 32 : 20,
-    fontWeight: "500",
-    letterSpacing: 1,
-  },
+
   form: {
     width: "100%",
     maxWidth: 400,
@@ -403,6 +351,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
+  formTitle: {
+    color: "#6426A9",
+    fontSize: isTablet ? 24 : 18,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: isTablet ? 24 : 20,
+    marginTop: isTablet ? 24 : 20,
+    letterSpacing: 1,
+  },
+
+
   inputContainer: {
     marginBottom: 16,
   },
@@ -471,17 +430,17 @@ const styles = StyleSheet.create({
   },
   footbar: {
     width: "100%",
-    backgroundColor: "#6426A9",
+    backgroundColor: "transparent",
     paddingVertical: 18,
     alignItems: "center",
     justifyContent: "center",
     position: "absolute",
-    bottom: 0,
+    bottom: Platform.OS === 'android' ? 20 : 0,
     left: 0,
     marginTop: isTablet ? 48 : 32,
   },
   footbarText: {
-    color: "#fff",
+    color: "#6426A9",
     fontSize: isTablet ? 15 : 12,
     fontWeight: "500",
     letterSpacing: 1,
